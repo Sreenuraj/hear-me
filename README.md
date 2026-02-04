@@ -1,6 +1,6 @@
 # hear-me MCP
 
-**🎧 This repo already includes a `hear-me.wav` so you can listen right away.**
+**🎧 Experimental: this repo includes [`hear-me.wav`](hear-me.wav) — a little preview while we keep polishing the pipeline.**
 
 > **Replace your README.md with a hear-me.mp3**
 
