@@ -189,36 +189,34 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 
 ### Tasks
 
-- [ ] **4.1 macOS Installer Script**
-  - [ ] Homebrew dependency installation
-  - [ ] Python venv creation
-  - [ ] Engine-specific model downloads
-  - [ ] MCP config JSON output
+- [x] **4.1 macOS Installer Script**
+  - [x] Homebrew dependency installation
+  - [x] Python venv creation
+  - [x] Engine-specific model downloads
+  - [x] MCP config JSON output
 
-- [ ] **4.2 Linux Installer Script**
+- [ ] **4.2 Linux Installer Script** *(Deferred)*
   - [ ] Support apt/dnf/pacman package managers
   - [ ] Handle CUDA detection for GPU engines
   - [ ] Model downloading with progress
 
-- [ ] **4.3 Cross-Platform Python Installer**
-  - [ ] `install.py` with profile support (minimal/recommended/full)
-  - [ ] Dependency verification
-  - [ ] Interactive and non-interactive modes
+- [x] **4.3 Cross-Platform Python Installer**
+  - [x] `install.py` with profile support (minimal/recommended/full)
+  - [x] Dependency verification
+  - [x] Interactive and non-interactive modes
 
-- [ ] **4.4 Installation Validation**
-  - [ ] Generate test audio (5-second sample)
-  - [ ] Verify engine functionality
-  - [ ] Output success/failure report
+- [x] **4.4 Installation Validation**
+  - [x] Verify engine availability
+  - [x] Output success/failure report
 
-- [ ] **4.5 First-Run Experience**
+- [ ] **4.5 First-Run Experience** *(Deferred)*
   - [ ] Detect first run via missing config
   - [ ] Guide through engine selection
-  - [ ] Provide sample commands to agent
 
 ### Deliverables
-- `./install-macos.sh --engine vibevoice` works end-to-end
-- Installation outputs ready-to-use MCP config
-- User hears sample audio after successful install
+- ✅ `./install-macos.sh --engine dia2` works end-to-end
+- ✅ `python install.py --profile full` for cross-platform
+- ✅ Installation outputs ready-to-use MCP config
 
 ---
 
@@ -268,7 +266,7 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 | Phase 2: Document Pipeline | ✅ Complete | 100% |
 | Phase 3: Audio Generation | ✅ Complete | 100% |
 | Phase 3.5: Enhanced TTS Engines | 🔶 In Progress | 80% |
-| Phase 4: Installation & UX | 🔲 Not Started | 0% |
+| Phase 4: Installation & UX | 🔶 In Progress | 70% |
 | Phase 5: Polish & Release | 🔲 Not Started | 0% |
 
 ---
