@@ -1,6 +1,6 @@
-# Contributing to HEARME
+# Contributing to hear-me
 
-We love your input! We want to make contributing to HEARME as easy and transparent as possible.
+We love your input! We want to make contributing to hear-me as easy and transparent as possible.
 
 ## Development Setup
 
@@ -23,7 +23,7 @@ We love your input! We want to make contributing to HEARME as easy and transpare
 
 ## Engine Setup
 
-HEARME uses a plugin-like architecture for TTS engines.
+hear-me uses a plugin-like architecture for TTS engines.
 
 ### 1. Install optional engines
 ```bash

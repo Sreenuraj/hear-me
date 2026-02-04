@@ -1,5 +1,5 @@
 """
-HEARME Kokoro Audio Engine
+hear-me Kokoro Audio Engine
 
 Lightweight, CPU-friendly TTS using Kokoro.
 Good quality single-speaker synthesis without GPU requirements.

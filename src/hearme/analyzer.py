@@ -1,5 +1,5 @@
 """
-HEARME Document Analyzer
+hear-me Document Analyzer
 
 Parses document structure and extracts metadata for audio preparation.
 Does NOT summarize or interpret content - that's the LLM's job.

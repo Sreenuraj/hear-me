@@ -1,5 +1,5 @@
 """
-HEARME MCP - Command-line entry point.
+hear-me MCP - Command-line entry point.
 
 Usage:
     python -m hearme

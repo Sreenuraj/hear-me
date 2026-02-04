@@ -1,5 +1,5 @@
 """
-HEARME Troubleshooting Tool
+hear-me Troubleshooting Tool
 
 Self-diagnosis utility to verify system health and engine status.
 """
@@ -144,3 +144,16 @@ def run_diagnostics() -> Dict[str, Any]:
             for d in diagnostics
         ]
     }
+
+
+if __name__ == "__main__":
+    import json
+    results = run_diagnostics()
+    print(json.dumps(results, indent=2))
+    
+    # Exit with error if any checks failed
+    if not results["summary"]["healthy"]:
+        # Allow warnings but fail on failures
+        if results["summary"]["failures"] > 0:
+            sys.exit(1)
+    sys.exit(0)

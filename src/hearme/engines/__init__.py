@@ -1,5 +1,5 @@
 """
-HEARME Audio Engines
+hear-me Audio Engines
 
 Engine abstraction layer for text-to-speech synthesis.
 """

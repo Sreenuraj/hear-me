@@ -1,5 +1,5 @@
 """
-HEARME Prerequisite Detection System
+hear-me Prerequisite Detection System
 
 Detects platform, Python version, audio engines, and system dependencies.
 Provides actionable installation guidance when prerequisites are missing.

@@ -1,8 +1,8 @@
 """
-HEARME Configuration System
+hear-me Configuration System
 
-Handles loading, validation, and defaults for HEARME configuration.
-Supports hearme.json in workspace or ~/.hearme/config.json for global settings.
+Handles loading, validation, and defaults for hear-me configuration.
+Supports hear-me.json in workspace or ~/.hear-me/config.json for global settings.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ class DefaultsConfig(BaseModel):
 
 class OutputConfig(BaseModel):
     """Output file settings."""
-    dir: str = Field(default=".hearme", description="Output directory")
+    dir: str = Field(default=".hear-me", description="Output directory")
 
 
 class PrivacyConfig(BaseModel):
@@ -46,12 +46,12 @@ class PrivacyConfig(BaseModel):
 
 class InstallationConfig(BaseModel):
     """Installation paths."""
-    models_dir: str = Field(default="~/.hearme/models", description="Model storage path")
-    venv_path: str = Field(default="~/.hearme/venv", description="Virtual environment path")
+    models_dir: str = Field(default="~/.hear-me/models", description="Model storage path")
+    venv_path: str = Field(default="~/.hear-me/venv", description="Virtual environment path")
 
 
 class HearmeConfig(BaseModel):
-    """Root configuration for HEARME."""
+    """Root configuration for hear-me."""
     audio: AudioConfig = Field(default_factory=AudioConfig)
     defaults: DefaultsConfig = Field(default_factory=DefaultsConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
@@ -61,23 +61,23 @@ class HearmeConfig(BaseModel):
 
 class Config(BaseModel):
     """Top-level config wrapper."""
-    hearme: HearmeConfig = Field(default_factory=HearmeConfig)
+    hearme: HearmeConfig = Field(default_factory=HearmeConfig, alias="hear-me")
 
 
 def find_config_file() -> Path | None:
     """
     Find configuration file in priority order:
-    1. ./hearme.json (workspace)
-    2. ~/.hearme/config.json (user global)
+    1. ./hear-me.json (workspace)
+    2. ~/.hear-me/config.json (user global)
     3. None (use defaults)
     """
     # Check workspace first
-    workspace_config = Path("hearme.json")
+    workspace_config = Path("hear-me.json")
     if workspace_config.exists():
         return workspace_config
     
     # Check user home
-    home_config = Path.home() / ".hearme" / "config.json"
+    home_config = Path.home() / ".hear-me" / "config.json"
     if home_config.exists():
         return home_config
     
@@ -86,7 +86,7 @@ def find_config_file() -> Path | None:
 
 def load_config() -> HearmeConfig:
     """
-    Load HEARME configuration.
+    Load hear-me configuration.
     
     Returns defaults if no config file found.
     """
@@ -100,15 +100,16 @@ def load_config() -> HearmeConfig:
         with open(config_path) as f:
             data = json.load(f)
         
-        # Handle both {"hearme": {...}} and flat format
-        if "hearme" in data:
+        # Handle both {"hear-me": {...}} and flat format
+        if "hear-me" in data:
             config = Config.model_validate(data)
             return config.hearme
         else:
             return HearmeConfig.model_validate(data)
     except (json.JSONDecodeError, Exception) as e:
-        print(f"Warning: Failed to load config from {config_path}: {e}")
-        print("Using default configuration.")
+        import sys
+        print(f"Warning: Failed to load config from {config_path}: {e}", file=sys.stderr)
+        print("Using default configuration.", file=sys.stderr)
         return HearmeConfig()
 
 
@@ -118,13 +119,13 @@ def save_config(config: HearmeConfig, path: Path | None = None) -> Path:
     
     Args:
         config: Configuration to save
-        path: Target path (defaults to ./hearme.json)
+        path: Target path (defaults to ./hear-me.json)
     
     Returns:
         Path where config was saved
     """
     if path is None:
-        path = Path("hearme.json")
+        path = Path("hear-me.json")
     
     wrapped = Config(hearme=config)
     

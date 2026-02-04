@@ -1,5 +1,5 @@
 """
-HEARME Dia2 Audio Engine
+hear-me Dia2 Audio Engine
 
 High-quality multi-speaker conversational TTS using Nari Labs Dia2.
 Produces NotebookLM-like two-host conversations.
@@ -57,12 +57,13 @@ class Dia2Engine(BaseEngine):
         )
     
     def is_available(self) -> bool:
-        """Check if Dia2 is installed."""
+        """Check if Dia2 is installed (vendored)."""
         if self._available is not None:
             return self._available
         
         try:
-            import dia
+            # Check vendored import
+            from hearme.vendor.dia2.engine import Dia2
             self._available = True
         except ImportError:
             self._available = False
@@ -75,10 +76,31 @@ class Dia2Engine(BaseEngine):
             return
         
         if not self.is_available():
-            raise RuntimeError("Dia2 not installed. Run: pip install dia-tts")
+            raise RuntimeError("Dia2 engine code not found in vendor directory.")
         
         try:
-            import dia
+            # =========================================================
+            # CRITICAL: Suppress stdout pollution for MCP compatibility
+            # HuggingFace Hub warnings and tqdm progress bars write to
+            # stdout by default, corrupting the JSON-RPC protocol.
+            # =========================================================
+            import os
+            import sys
+            
+            # Suppress HuggingFace Hub progress bars and warnings
+            os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+            os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
+            os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+            
+            # Configure tqdm to use stderr or disable entirely
+            os.environ["TQDM_DISABLE"] = "1"  # Disable tqdm progress bars
+            
+            # Suppress transformers/huggingface logging warnings
+            import warnings
+            warnings.filterwarnings("ignore", message=".*unauthenticated requests.*")
+            
+            # Import from vendor
+            from hearme.vendor.dia2.engine import Dia2
             import torch
             
             # Detect device (MPS for Apple Silicon, CUDA for NVIDIA, else CPU)
@@ -90,8 +112,8 @@ class Dia2Engine(BaseEngine):
                 device = "cpu"
             
             logger.info(f"Loading Dia2 model on {device}...")
-            self._model = dia.Dia.from_pretrained("nari-labs/Dia-1.6B")
-            self._model.to(device)
+            # Use official Nari Labs repo
+            self._model = Dia2.from_repo("nari-labs/Dia2-2B", device=device)
             self._loaded = True
             logger.info(f"Dia2 loaded successfully on {device}")
             
@@ -104,6 +126,10 @@ class Dia2Engine(BaseEngine):
         if self._model is not None:
             import gc
             import torch
+            
+            # Close runtime if available
+            if hasattr(self._model, 'close'):
+                self._model.close()
             
             del self._model
             self._model = None
@@ -140,8 +166,6 @@ class Dia2Engine(BaseEngine):
     ) -> SynthesisResult:
         """
         Synthesize single-speaker audio.
-        
-        For Dia2, wraps text with speaker tag.
         """
         if not self._loaded:
             self.load()
@@ -159,8 +183,6 @@ class Dia2Engine(BaseEngine):
     ) -> SynthesisResult:
         """
         Synthesize multi-speaker conversation.
-        
-        Dia2 natively supports [S1] and [S2] tags.
         """
         if not self._loaded:
             self.load()
@@ -184,9 +206,13 @@ class Dia2Engine(BaseEngine):
                 continue
             
             # Map speaker to S1 or S2
-            if speaker in voice_map:
-                dia_speaker = voice_map[speaker]
-            elif speaker in speaker_mapping:
+            # NOTE: Dia2 only supports [S1] and [S2] tags
+            # voice_map values like "en_US-amy-medium" are NOT used by Dia2
+            # We map speakers based on order of first appearance:
+            # - First unique speaker -> S1
+            # - Second unique speaker -> S2
+            # - All subsequent speakers alternate between S1/S2
+            if speaker in speaker_mapping:
                 dia_speaker = speaker_mapping[speaker]
             else:
                 speaker_count += 1
@@ -207,23 +233,27 @@ class Dia2Engine(BaseEngine):
             import wave
             
             # Generate audio
-            audio = self._model.generate(script)
+            # Dia2 generate returns a GenerationResult object
+            result = self._model.generate(script)
+            
+            waveform = result.waveform  # Tensor [1, samples]
+            sample_rate = result.sample_rate
+            
+            # Convert to numpy
+            if hasattr(waveform, 'cpu'):
+                audio = waveform.squeeze().detach().cpu().numpy()
+            else:
+                audio = waveform
+            
+            # Normalize float audio to int16
+            audio_int = (audio * 32767).astype(np.int16)
             
             # Convert to WAV bytes
-            sample_rate = 24000  # Dia2 default
-            
             buffer = io.BytesIO()
             with wave.open(buffer, 'wb') as wav:
                 wav.setnchannels(1)
                 wav.setsampwidth(2)
                 wav.setframerate(sample_rate)
-                
-                # Convert float audio to int16
-                if isinstance(audio, np.ndarray):
-                    audio_int = (audio * 32767).astype(np.int16)
-                else:
-                    audio_int = (np.array(audio) * 32767).astype(np.int16)
-                
                 wav.writeframes(audio_int.tobytes())
             
             audio_data = buffer.getvalue()

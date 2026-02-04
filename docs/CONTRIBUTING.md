@@ -1,6 +1,6 @@
-# Contributing to HEARME
+# Contributing to hear-me
 
-Thank you for your interest in contributing to HEARME! This document provides guidelines for contributing.
+Thank you for your interest in contributing to hear-me! This document provides guidelines for contributing.
 
 ## Getting Started
 

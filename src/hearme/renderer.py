@@ -1,5 +1,5 @@
 """
-HEARME Audio Renderer
+hear-me Audio Renderer
 
 Renders audio from agent-generated scripts using the engine abstraction.
 Handles multi-speaker synthesis, voice mapping, and audio concatenation.
@@ -139,7 +139,7 @@ def concatenate_wav(segments: list[SynthesisSegment], sample_rate: int = 24000) 
 
 def render_audio(
     script: list[dict],
-    output_path: str = ".hearme/hearme.audio.wav",
+    output_path: str = ".hear-me/hear-me.audio.wav",
     voice_map: dict[str, str] | None = None,
     engine_name: str | None = None,
     format: AudioFormat = "wav",

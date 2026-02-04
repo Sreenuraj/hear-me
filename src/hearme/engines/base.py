@@ -1,5 +1,5 @@
 """
-HEARME Audio Engine Base
+hear-me Audio Engine Base
 
 Defines the AudioEngine protocol and related types.
 All TTS engines must implement this interface.

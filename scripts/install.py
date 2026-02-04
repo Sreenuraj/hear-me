@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-HEARME Cross-Platform Installer
+hear-me Cross-Platform Installer
 
-Install HEARME with optional TTS engines.
+Install hear-me with optional TTS engines.
 Works on macOS, Linux, and Windows.
 
 Usage:
@@ -24,12 +24,12 @@ from pathlib import Path
 # Installation profiles
 PROFILES = {
     "minimal": {
-        "description": "Just HEARME core (mock engine only)",
+        "description": "Just hear-me core (mock engine only)",
         "engines": [],
         "extras": [],
     },
     "recommended": {
-        "description": "HEARME + Kokoro (good quality, works everywhere)",
+        "description": "hear-me + Kokoro (good quality, works everywhere)",
         "engines": ["kokoro"],
         "extras": [],
     },
@@ -43,8 +43,8 @@ PROFILES = {
 # Engine configurations
 ENGINES = {
     "dia2": {
-        "package": "dia-tts",
-        "requires": ["torch"],
+        "package": ".[dia2]",  # Install local package with extras
+        "requires": ["torch", "transformers"],
         "quality": "⭐⭐⭐⭐",
         "multi_speaker": True,
         "memory_mb": 2000,
@@ -69,7 +69,7 @@ ENGINES = {
 def print_header():
     """Print installation header."""
     print()
-    print("🎙️  HEARME Installer")
+    print("🎙️  hear-me Installer")
     print("=" * 40)
     print()
 
@@ -116,21 +116,28 @@ def pip_install(packages, quiet=True):
 
 
 def install_hearme():
-    """Install HEARME core."""
-    print("📥 Installing HEARME...")
+    """Install hear-me core."""
+    print("📥 Installing hear-me...")
     
-    # Try PyPI first, then git
-    if not pip_install("hearme"):
-        # Fallback to local install (for development)
-        script_dir = Path(__file__).parent.parent
-        if (script_dir / "pyproject.toml").exists():
-            pip_install(str(script_dir))
-        else:
-            print("❌ Failed to install HEARME")
-            return False
+    # Check if running from source repo
+    script_dir = Path(__file__).parent.resolve()
+    root_dir = script_dir.parent
     
-    print("✅ HEARME installed")
-    return True
+    if (root_dir / "pyproject.toml").exists():
+        print(f"📦 Installing from local source: {root_dir}")
+        # Install in editable mode for dev convenience, or normal for users
+        if pip_install(["-e", str(root_dir)]):
+            print("✅ hear-me installed from source")
+            return True
+    
+    # Fallback to PyPI
+    print("⚠️  Installing from PyPI...")
+    if pip_install("hear-me"):
+        print("✅ hear-me installed from PyPI")
+        return True
+        
+    print("❌ Failed to install hear-me")
+    return False
 
 
 def install_engine(name):
@@ -144,6 +151,14 @@ def install_engine(name):
     
     print(f"🔊 Installing {name}...")
     if pip_install(packages):
+        # Trigger pre-download for installed engine
+        print(f"⏳ Pre-downloading {name} models...")
+        script_path = Path(__file__).parent / "download_models.py"
+        try:
+             subprocess.run([sys.executable, str(script_path), "--engine", name], check=True)
+        except subprocess.CalledProcessError:
+             print(f"⚠️  {name} model download failed (or skipped). It will be attempted at runtime.")
+        
         print(f"✅ {name} installed")
         return True
     else:
@@ -157,18 +172,32 @@ def generate_mcp_config(install_dir=None):
     
     config = {
         "mcpServers": {
-            "hearme": {
+            "hear-me": {
                 "command": python_path,
                 "args": ["-m", "hearme"]
             }
         }
     }
     
-    return json.dumps(config, indent=2)
+    mcp_config_path = install_dir / "mcp_config.json"
+    mcp_config_path.write_text(json.dumps(config, indent=2))
+    print(f"✅ MCP config saved to: {mcp_config_path}")
+    
+    # Generate app config (to set default engine)
+    app_config = {
+        "hear-me": {
+            "audio": {
+                "engine": engine_name
+            }
+        }
+    }
+    app_config_path = install_dir / "config.json"
+    app_config_path.write_text(json.dumps(app_config, indent=2))
+    print(f"✅ Default engine set to: {engine_name}")
 
 
 def verify_installation():
-    """Verify HEARME is working."""
+    """Verify hear-me is working."""
     print()
     print("🧪 Verifying installation...")
     
@@ -176,7 +205,7 @@ def verify_installation():
         from hearme import __version__
         from hearme.engines import get_engine, list_engines
         
-        print(f"✅ HEARME v{__version__}")
+        print(f"✅ hear-me v{__version__}")
         
         # Check available engines
         engines = list_engines()
@@ -209,7 +238,7 @@ def interactive_mode():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Install HEARME")
+    parser = argparse.ArgumentParser(description="Install hear-me")
     parser.add_argument("--engine", help="TTS engine to install")
     parser.add_argument("--profile", choices=PROFILES.keys(), help="Installation profile")
     parser.add_argument("--non-interactive", action="store_true", help="Non-interactive mode")
@@ -238,7 +267,7 @@ def main():
         profile = PROFILES[profile_name]
         engines = profile["engines"]
     
-    # Install HEARME
+    # Install hear-me
     if not install_hearme():
         sys.exit(1)
     

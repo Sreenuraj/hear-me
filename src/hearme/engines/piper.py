@@ -1,5 +1,5 @@
 """
-HEARME Piper Audio Engine
+hear-me Piper Audio Engine
 
 Lightweight, fast TTS using Piper (ONNX-based).
 Ultra-low resource usage for fallback on constrained systems.

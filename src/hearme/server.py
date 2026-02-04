@@ -1,5 +1,5 @@
 """
-HEARME MCP Server
+hear-me MCP Server
 
 Main server implementation using FastMCP. Exposes 6 core tools:
 1. check_prerequisites - Detect platform and dependencies
@@ -9,6 +9,35 @@ Main server implementation using FastMCP. Exposes 6 core tools:
 5. prepare_audio_context - Create LLM-ready narration context
 6. render_audio - Generate audio from script
 """
+
+# =============================================================================
+# CRITICAL: Suppress stdout pollution BEFORE any imports
+# HuggingFace Hub, tqdm, and other libraries write to stdout by default,
+# which corrupts the MCP JSON-RPC protocol. This MUST be at the very top.
+# =============================================================================
+import os
+import sys
+import warnings
+
+# Suppress HuggingFace Hub progress bars and warnings
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# Disable tqdm progress bars globally
+os.environ["TQDM_DISABLE"] = "1"
+
+# Suppress common library warnings that might go to stdout
+warnings.filterwarnings("ignore", message=".*unauthenticated requests.*")
+warnings.filterwarnings("ignore", category=UserWarning)
+
+# Force tqdm to use stderr if it somehow still runs
+try:
+    import tqdm
+    tqdm.tqdm = lambda *args, **kwargs: iter(args[0]) if args else iter([])
+except ImportError:
+    pass
 
 from mcp.server.fastmcp import FastMCP
 
@@ -20,10 +49,8 @@ from hearme.context import prepare_audio_context as do_prepare_context
 from hearme.planner import propose_audio_plan as do_propose_plan
 
 # Initialize FastMCP server
-mcp = FastMCP(
-    "hearme",
-    description="Replace your README.md with a hearme.mp3 - Transform documentation into conversational audio"
-)
+# Initialize FastMCP server
+mcp = FastMCP("hear-me")
 
 
 # =============================================================================
@@ -33,7 +60,7 @@ mcp = FastMCP(
 @mcp.tool()
 async def check_prerequisites() -> dict:
     """
-    Check system prerequisites for HEARME.
+    Check system prerequisites for hear-me.
     
     Detects:
     - Platform (macOS/Linux/Windows)
@@ -160,7 +187,7 @@ async def prepare_audio_context(
 @mcp.tool()
 async def render_audio(
     script: list[dict],
-    output_path: str = ".hearme/hearme.audio.wav",
+    output_path: str = ".hear-me/hear-me.audio.wav",
     voice_map: dict | None = None,
     engine: str | None = None,
     persist: bool = True,
@@ -190,7 +217,7 @@ async def render_audio(
     from hearme.output import persist_outputs, get_output_path
     
     # Resolve output path
-    if output_path == ".hearme/hearme.audio.wav":
+    if output_path == ".hear-me/hear-me.audio.wav":
         output_path = get_output_path(root)
     
     # Render audio
@@ -260,7 +287,7 @@ async def cleanup_resources() -> dict:
 @mcp.tool()
 async def resource_status() -> dict:
     """
-    Check current resource status of HEARME.
+    Check current resource status of hear-me.
     
     Returns which engines are loaded and their memory estimates.
     Useful for debugging or verifying cleanup worked.
@@ -290,7 +317,7 @@ async def resource_status() -> dict:
 
 
 # =============================================================================
-# Tool 9: troubleshoot_hearme (Self-diagnosis)
+# Tool 9: troubleshoot_hear-me (Self-diagnosis)
 # =============================================================================
 
 @mcp.tool()
@@ -314,14 +341,16 @@ async def troubleshoot_hearme() -> dict:
 # =============================================================================
 
 def run_server():
-    """Run the HEARME MCP server."""
+    """Run the hear-me MCP server."""
     # Load configuration
     config = load_config()
     
     # Log startup info
-    print(f"HEARME MCP Server v0.1.0")
-    print(f"Engine: {config.audio.engine}")
-    print(f"Privacy: allow_network={config.privacy.allow_network}")
+    # Logging to stderr to avoid breaking JSON-RPC on stdout
+    import sys
+    print(f"hear-me MCP Server v0.1.0", file=sys.stderr)
+    print(f"Engine: {config.audio.engine}", file=sys.stderr)
+    print(f"Privacy: allow_network={config.privacy.allow_network}", file=sys.stderr)
     
     # Run the server
     mcp.run()

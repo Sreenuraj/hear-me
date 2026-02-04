@@ -1,5 +1,5 @@
 """
-HEARME Mock Audio Engine
+hear-me Mock Audio Engine
 
 A mock engine for development and testing.
 Returns placeholder/silent audio without requiring any TTS dependencies.

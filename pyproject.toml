@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hearme-mcp"
+name = "hear-me-mcp"
 version = "0.1.0"
-description = "Replace your README.md with a hearme.mp3 - MCP for documentation-to-audio"
+description = "Replace your README.md with a hear-me.mp3 - MCP for documentation-to-audio"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "HEARME Contributors" }
+    { name = "hear-me Contributors" }
 ]
 keywords = ["mcp", "tts", "documentation", "audio", "ai"]
 classifiers = [
@@ -36,13 +36,31 @@ dev = [
     "ruff>=0.4.0",
 ]
 
+dia2 = [
+    "torch>=2.1.0",           # MPS/CPU support
+    "numpy<3.0,>=2.1.0",
+    "transformers>=4.35.3",   # Bumped for dia2
+    "safetensors>=0.5.3",     # Bumped for dia2
+    "huggingface-hub>=0.24.7",
+    "soundfile>=0.12.1",
+    "scipy>=1.10.0",
+    "librosa>=0.10.0",
+    "inflect>=7.0.0",
+    "protobuf>=4.25.0",
+    "sentencepiece>=0.2.0",
+    "tiktoken>=0.1.0",        # Required for tokenizer fallback
+    # Specific dia dependencies
+    "sphn>=0.2.0",
+    "whisper-timestamped>=1.14.2",
+]
+
 [project.scripts]
-hearme = "hearme:main"
+hear-me = "hearme:main"
 
 [project.urls]
-Homepage = "https://github.com/hearme-mcp/hearme"
-Documentation = "https://github.com/hearme-mcp/hearme/docs"
-Repository = "https://github.com/hearme-mcp/hearme"
+Homepage = "https://github.com/hear-me-mcp/hear-me"
+Documentation = "https://github.com/hear-me-mcp/hear-me/docs"
+Repository = "https://github.com/hear-me-mcp/hear-me"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hearme"]

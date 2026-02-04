@@ -1,5 +1,5 @@
 """
-HEARME Engine Registry
+hear-me Engine Registry
 
 Manages available audio engines and provides fallback selection.
 """

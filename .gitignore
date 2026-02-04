@@ -41,7 +41,7 @@ yarn-error.log*
 Thumbs.db
 
 # Project specific
-.hearme/
+.hear-me/
 *.mp3
 *.wav
 models/
@@ -52,3 +52,6 @@ models/
 # Logs
 *.log
 logs/
+
+# Testing
+.pytest_cache/

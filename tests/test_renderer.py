@@ -1,10 +1,10 @@
 """
-Tests for HEARME audio renderer.
+Tests for hear-me audio renderer.
 """
 
 import pytest
 from pathlib import Path
-from hearme.renderer import (
+from hear-me.renderer import (
     parse_script,
     validate_script,
     render_audio,

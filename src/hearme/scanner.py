@@ -1,5 +1,5 @@
 """
-HEARME Workspace Scanner
+hear-me Workspace Scanner
 
 Discovers and classifies documentation files in a project.
 Respects .gitignore patterns and handles large repositories.

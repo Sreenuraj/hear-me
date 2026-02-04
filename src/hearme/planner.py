@@ -1,5 +1,5 @@
 """
-HEARME Audio Plan Proposer
+hear-me Audio Plan Proposer
 
 Suggests audio generation strategy based on document analysis.
 Proposes speaker assignments, document ordering, and duration estimates.

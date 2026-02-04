@@ -1,9 +1,9 @@
 """
-Tests for HEARME document analyzer.
+Tests for hear-me document analyzer.
 """
 
 import pytest
-from hearme.analyzer import (
+from hear-me.analyzer import (
     parse_markdown,
     analyze_documents,
     extract_signals,

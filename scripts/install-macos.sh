@@ -1,6 +1,6 @@
 #!/bin/bash
-# HEARME macOS Installation Script
-# Install HEARME with optional TTS engine setup
+# hear-me macOS Installation Script
+# Install hear-me with optional TTS engine setup
 
 set -e
 
@@ -12,14 +12,14 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo ""
-echo -e "${BLUE}🎙️  HEARME Installer for macOS${NC}"
+echo -e "${BLUE}🎙️  hear-me Installer for macOS${NC}"
 echo "=================================="
 echo ""
 
 # Parse arguments
 ENGINE="kokoro"  # Default engine
 PROFILE="recommended"
-INSTALL_DIR="${HOME}/.hearme"
+INSTALL_DIR="${HOME}/.hear-me"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --engine ENGINE    TTS engine: dia2, kokoro, piper (default: kokoro)"
             echo "  --profile PROFILE  Installation profile: minimal, recommended, full"
-            echo "  --dir PATH         Installation directory (default: ~/.hearme)"
+            echo "  --dir PATH         Installation directory (default: ~/.hear-me)"
             echo ""
             echo "Engines:"
             echo "  dia2     NotebookLM-like multi-speaker (requires ~2GB RAM)"
@@ -57,9 +57,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Resolve script directory at the start, BEFORE changing directories
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
 echo -e "Engine:  ${GREEN}${ENGINE}${NC}"
 echo -e "Profile: ${GREEN}${PROFILE}${NC}"
 echo -e "Dir:     ${GREEN}${INSTALL_DIR}${NC}"
+echo -e "Source:  ${GREEN}${ROOT_DIR}${NC}"
 echo ""
 
 # Check macOS
@@ -105,25 +110,54 @@ if [ ! -d "venv" ]; then
 fi
 source venv/bin/activate
 
-# Install HEARME
-echo -e "${BLUE}📥 Installing HEARME...${NC}"
+# Install hear-me
+# Install hear-me
+echo -e "${BLUE}📥 Installing hear-me...${NC}"
 pip install --upgrade pip --quiet
-pip install hearme --quiet 2>/dev/null || pip install git+https://github.com/your-repo/hearme.git --quiet
+
+if [ -f "$ROOT_DIR/pyproject.toml" ]; then
+    echo -e "${BLUE}📦 Installing from local source: $ROOT_DIR${NC}"
+    pip install -e "$ROOT_DIR" --quiet
+    # Also install dev dependencies for local dev
+    pip install -e "$ROOT_DIR[dev]" --quiet
+else
+    # Fallback to PyPI (once published) or error
+    echo -e "${YELLOW}⚠️  Installing from PyPI (if available)...${NC}"
+    pip install hear-me --quiet 2>/dev/null || { echo -e "${RED}❌ Could not install 'hear-me'. Run this script from within the repo.${NC}"; exit 1; }
+fi
 
 # Install TTS engine
 echo ""
 echo -e "${BLUE}🔊 Installing $ENGINE engine...${NC}"
 case $ENGINE in
     dia2)
-        pip install dia-tts torch --quiet
+        # Dia2 (vendored)
+        echo -e "${YELLOW}⚠️  Installing Dia2 dependencies (large download)...${NC}"
+        # Install with [dia2] extra, forcing upgrade to match requirements
+        pip install -e "$ROOT_DIR[dia2]" --upgrade --quiet
+        
+        # Pre-download model weights
+        echo -e "${YELLOW}⏳ Pre-downloading Dia2-2B model (this may take a while)...${NC}"
+        python3 "$ROOT_DIR/scripts/download_models.py" --engine dia2
+        
         echo -e "${GREEN}✅ Dia2 installed (multi-speaker)${NC}"
         ;;
     kokoro)
         pip install kokoro --quiet
+        
+        # Pre-download
+        echo -e "${YELLOW}⏳ Pre-downloading Kokoro model...${NC}"
+        python3 "$ROOT_DIR/scripts/download_models.py" --engine kokoro
+        
         echo -e "${GREEN}✅ Kokoro installed${NC}"
         ;;
     piper)
         pip install piper-tts --quiet
+        
+        # Pre-download
+        echo -e "${YELLOW}⏳ Pre-downloading Piper voice...${NC}"
+        python3 "$ROOT_DIR/scripts/download_models.py" --engine piper
+        
         echo -e "${GREEN}✅ Piper installed${NC}"
         ;;
     *)
@@ -138,7 +172,7 @@ echo -e "${BLUE}⚙️  Generating MCP configuration...${NC}"
 MCP_CONFIG=$(cat <<EOF
 {
   "mcpServers": {
-    "hearme": {
+    "hear-me": {
       "command": "${INSTALL_DIR}/venv/bin/python",
       "args": ["-m", "hearme"]
     }
@@ -150,12 +184,32 @@ EOF
 echo "$MCP_CONFIG" > "$INSTALL_DIR/mcp-config.json"
 echo -e "${GREEN}✅ MCP config saved to: ${INSTALL_DIR}/mcp-config.json${NC}"
 
+# Generate application config (to set default engine)
+APP_CONFIG=$(cat <<EOF
+{
+  "hear-me": {
+    "audio": {
+      "engine": "${ENGINE}"
+    }
+  }
+}
+EOF
+)
+echo "${APP_CONFIG}" > "${INSTALL_DIR}/config.json"
+echo -e "${GREEN}✅ Default engine set to: ${ENGINE}${NC}"
+
 # Test installation
 echo ""
-echo -e "${BLUE}🧪 Testing installation...${NC}"
-python -c "from hearme import __version__; print(f'HEARME v{__version__}')" 2>/dev/null && \
-    echo -e "${GREEN}✅ HEARME ready!${NC}" || \
-    echo -e "${YELLOW}⚠️  Installation may need additional setup${NC}"
+echo -e "${BLUE}🧪 Verifying installation compatibility...${NC}"
+python -c "from hearme import __version__; print(f'hear-me v{__version__}')" 2>/dev/null
+
+if python -m hearme.troubleshoot; then
+    echo -e "${GREEN}✅ System checks passed${NC}"
+else
+    echo -e "${RED}❌ System checks failed. See errors above.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ hear-me ready!${NC}"
 
 # Print next steps
 echo ""

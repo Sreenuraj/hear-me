@@ -1,8 +1,8 @@
 """
-HEARME Output Manager
+hear-me Output Manager
 
 Manages output file persistence and metadata generation.
-Creates the .hearme/ directory structure with audio, scripts, and metadata.
+Creates the .hear-me/ directory structure with audio, scripts, and metadata.
 """
 
 from __future__ import annotations
@@ -44,15 +44,15 @@ class OutputManifest:
 
 def ensure_hearme_directory(root: str = ".") -> Path:
     """
-    Ensure .hearme directory exists.
+    Ensure .hear-me directory exists.
     
     Args:
         root: Project root directory
     
     Returns:
-        Path to .hearme directory
+        Path to .hear-me directory
     """
-    hearme_dir = Path(root) / ".hearme"
+    hearme_dir = Path(root) / ".hear-me"
     hearme_dir.mkdir(parents=True, exist_ok=True)
     return hearme_dir
 
@@ -177,7 +177,7 @@ def persist_outputs(
     return result
 
 
-def get_output_path(root: str = ".", filename: str = "hearme.audio") -> str:
+def get_output_path(root: str = ".", filename: str = "hear-me.audio") -> str:
     """
     Get the default output path for audio.
     

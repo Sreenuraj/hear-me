@@ -1,8 +1,8 @@
-# HEARME MCP
+# hear-me MCP
 
-> **Replace your README.md with a hearme.mp3**
+> **Replace your README.md with a hear-me.mp3**
 
-HEARME is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) that transforms your project documentation into natural, conversational audio files.
+hear-me is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) that transforms your project documentation into natural, conversational audio files.
 
 Instead of asking users to *read* your README, let them *listen* to it.
 
@@ -11,12 +11,12 @@ Instead of asking users to *read* your README, let them *listen* to it.
 ## 💡 The Idea
 
 ```
-README.md  →  HEARME MCP  →  hearme.mp3
+README.md  →  hear-me MCP  →  hear-me.mp3
 ```
 
-1. **You** plug HEARME into your AI agent (PostQode, Copilot, Cline, etc.)
+1. **You** plug hear-me into your AI agent (PostQode, Copilot, Cline, etc.)
 2. **Select** the documents you want to convert (README, architecture docs, guides)
-3. **Generate** a `hearme.mp3` – a podcast-style audio explanation of your project
+3. **Generate** a `hear-me.mp3` – a podcast-style audio explanation of your project
 4. **Ship it** alongside your code, so users can listen instead of read
 
 Think Google NotebookLM's "Audio Overview" – but for any codebase, running locally on your machine.
@@ -25,9 +25,9 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 
 ## 🎧 What You Get
 
-| Traditional | With HEARME |
+| Traditional | With hear-me |
 |-------------|-------------|
-| `README.md` – walls of text | `hearme.mp3` – conversational audio |
+| `README.md` – walls of text | `hear-me.mp3` – conversational audio |
 | Users skim or skip | Users listen while commuting/coding |
 | Static documentation | Dynamic, engaging explanations |
 | One format fits none | Audio-first understanding |
@@ -57,7 +57,7 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 ```bash
 ./scripts/install-macos.sh --engine dia2
 ```
-*Installs HEARME with Dia2 engine (high quality, multi-speaker) using Apple Silicon acceleration.*
+*Installs hear-me with Dia2 engine (high quality, multi-speaker) using Apple Silicon acceleration.*
 
 **Cross-Platform (Linux/Windows):**
 ```bash
@@ -70,9 +70,9 @@ After installation, paste the generated JSON config into your MCP settings (e.g.
 ```json
 {
   "mcpServers": {
-    "hearme": {
-      "command": "/Users/you/.hearme/venv/bin/python",
-      "args": ["-m", "hearme"]
+    "hear-me": {
+      "command": "/Users/you/.hear-me/venv/bin/python",
+      "args": ["-m", "hear-me"]
     }
   }
 }
@@ -86,7 +86,7 @@ Ask your agent:
 
 ## 🔊 Audio Engines
 
-HEARME includes several engines to balance quality vs. performance.
+hear-me includes several engines to balance quality vs. performance.
 
 | Engine | Quality | Multi-Speaker | Size | Features |
 |--------|---------|---------------|------|----------|
@@ -98,7 +98,7 @@ HEARME includes several engines to balance quality vs. performance.
 *Note: VibeVoice engine support coming soon.*
 
 ## ⚙️ Configuration
-HEARME automatically degrades gracefully. If Dia2 fails (e.g., out of memory), it falls back to Kokoro, then Piper.
+hear-me automatically degrades gracefully. If Dia2 fails (e.g., out of memory), it falls back to Kokoro, then Piper.
 
 You can force a specific engine in your agent prompt:
 > "Use the 'piper' engine to read this quickly."
@@ -112,7 +112,7 @@ You can force a specific engine in your agent prompt:
 
 ## 🔒 Privacy
 
-HEARME is **local-first by default**:
+hear-me is **local-first by default**:
 
 - ✅ All processing happens on your machine
 - ✅ No telemetry or usage tracking
@@ -126,5 +126,5 @@ HEARME is **local-first by default**:
 ---
 
 <p align="center">
-  <b>HEARME</b> – Because documentation should be heard, not just read.
+  <b>hear-me</b> – Because documentation should be heard, not just read.
 </p>

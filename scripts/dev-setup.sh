@@ -1,10 +1,10 @@
 #!/bin/bash
-# HEARME Development Setup
+# hear-me Development Setup
 # Run this script to set up your development environment
 
 set -e
 
-echo "🎙️ HEARME Development Setup"
+echo "🎙️ hear-me Development Setup"
 echo "============================"
 echo ""
 
@@ -29,13 +29,13 @@ echo "🔄 Activating virtual environment..."
 source .venv/bin/activate
 
 # Install package in editable mode with dev dependencies
-echo "📥 Installing HEARME in development mode..."
+echo "📥 Installing hear-me in development mode..."
 pip install -e ".[dev]" --quiet
 
 # Verify installation
 echo ""
 echo "🧪 Verifying installation..."
-python -c "from hearme import __version__; print(f'HEARME v{__version__} installed')"
+python -c "from hearme import __version__; print(f'hear-me v{__version__} installed')"
 
 echo ""
 echo "✅ Development setup complete!"

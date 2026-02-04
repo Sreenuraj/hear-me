@@ -1,15 +1,15 @@
 """
-Tests for HEARME audio engines.
+Tests for hear-me audio engines.
 """
 
 import pytest
-from hearme.engines.base import (
+from hear-me.engines.base import (
     EngineCapabilities,
     SynthesisResult,
     VoiceInfo,
 )
-from hearme.engines.mock import MockEngine
-from hearme.engines.registry import EngineRegistry, get_engine
+from hear-me.engines.mock import MockEngine
+from hear-me.engines.registry import EngineRegistry, get_engine
 
 
 class TestEngineCapabilities:

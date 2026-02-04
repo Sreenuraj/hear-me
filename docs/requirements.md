@@ -1,15 +1,15 @@
-# HEARME MCP – Requirements Specification
+# hear-me MCP – Requirements Specification
 
-> **Replace your README.md with a hearme.mp3**
+> **Replace your README.md with a hear-me.mp3**
 
 ---
 
 ## 1. Purpose & Vision
 
-**HEARME** is a Model Context Protocol (MCP) that transforms project documentation into natural, conversational audio files.
+**hear-me** is a Model Context Protocol (MCP) that transforms project documentation into natural, conversational audio files.
 
 ```
-README.md  →  HEARME MCP  →  hearme.mp3
+README.md  →  hear-me MCP  →  hear-me.mp3
 ```
 
 Instead of asking users to *read* your documentation, let them *listen* to it – podcast-style, with multi-speaker conversations, like Google NotebookLM's Audio Overview.
@@ -19,7 +19,7 @@ Instead of asking users to *read* your documentation, let them *listen* to it �
 - Multi-speaker discussions about architecture decisions  
 - Audio overviews users can listen to while commuting or coding
 
-HEARME is designed to be:
+hear-me is designed to be:
 - **Agent-driven** – Your AI controls tone, personality, structure
 - **Local-first** – All processing on your machine
 - **Privacy-respecting** – No data leaves without consent
@@ -31,11 +31,11 @@ HEARME is designed to be:
 ## 2. Core Principles
 
 1. **Agent-led intelligence**  
-   HEARME does not embed or depend on any LLM.  
+   hear-me does not embed or depend on any LLM.  
    All reasoning, interpretation, personality, tone, prioritization, and narrative structure are decided by the **invoking AI agent** (PostQode, Copilot, Cline, etc.).
 
 2. **Execution-only MCP**  
-   HEARME is responsible only for:
+   hear-me is responsible only for:
    - Document discovery and structuring
    - Preparing audio-suitable context
    - Rendering audio
@@ -56,7 +56,7 @@ HEARME is designed to be:
 Invoking Agent (LLM)
         │
         ▼
-HEARME MCP (tools + execution)
+hear-me MCP (tools + execution)
         │
         ▼
 Local Audio Engine + Workspace
@@ -67,7 +67,7 @@ Local Audio Engine + Workspace
 | Layer | Responsibility |
 |------|----------------|
 | Agent / LLM | Meaning, narration, personality, tone, structure |
-| HEARME MCP | Files, structure, constraints, audio execution |
+| hear-me MCP | Files, structure, constraints, audio execution |
 | Audio Engine | Deterministic audio synthesis |
 
 ---
@@ -169,13 +169,13 @@ The MCP never enforces duration or word count.
 - Speaker behavior and dynamics
 - Emphasis, prioritization, and narrative flow
 
-HEARME never injects personality or opinions.
+hear-me never injects personality or opinions.
 
 ---
 
 ## 9. LLM Instruction Contract
 
-HEARME defines a **semantic contract**, not a fixed prompt.
+hear-me defines a **semantic contract**, not a fixed prompt.
 
 The MCP must communicate that:
 - The output will be converted to audio
@@ -238,7 +238,7 @@ The MCP expects agent-generated scripts in the following form:
 
 ### 12.1 Audio Engine Strategy
 
-HEARME uses a **pluggable local audio engine model**.
+hear-me uses a **pluggable local audio engine model**.
 
 - No cloud dependency
 - No hardcoded providers
@@ -322,7 +322,7 @@ Audio engine selection is configuration-driven.
 
 ```json
 {
-  "hearme": {
+  "hear-me": {
     "audio": {
       "engine": "vibevoice",
       "fallback_engine": "kokoro",
@@ -374,7 +374,7 @@ renderAudio(script, voiceMap, outputFormat) → AudioFile
 
 The MCP **must detect missing prerequisites** and guide installation through the invoking agent.
 
-When a user plugs HEARME into their agent, the MCP should:
+When a user plugs hear-me into their agent, the MCP should:
 1. Detect the user's platform (macOS, Linux, Windows)
 2. Check for required dependencies (Python, audio engines, system libraries)
 3. Report missing prerequisites with actionable installation guidance
@@ -402,7 +402,7 @@ Returns:
   },
   "ready": false,
   "missing": ["vibevoice", "espeak-ng"],
-  "install_command": "hearme-install --engine vibevoice"
+  "install_command": "hear-me-install --engine vibevoice"
 }
 ```
 
@@ -423,7 +423,7 @@ The MCP provides guidance; the agent executes:
 
 ### 14.1 User Experience Goal
 
-Users should install HEARME with a **single command** that:
+Users should install hear-me with a **single command** that:
 1. Detects their platform
 2. Installs required dependencies
 3. Downloads the chosen TTS engine
@@ -454,12 +454,12 @@ Add this to your agent's MCP configuration:
 
 {
   "mcpServers": {
-    "hearme": {
+    "hear-me": {
       "command": "python",
-      "args": ["/Users/user/.hearme/server.py"],
+      "args": ["/Users/user/.hear-me/server.py"],
       "env": {
-        "HEARME_ENGINE": "vibevoice",
-        "HEARME_MODELS_DIR": "/Users/user/.hearme/models"
+        "hear-me_ENGINE": "vibevoice",
+        "hear-me_MODELS_DIR": "/Users/user/.hear-me/models"
       }
     }
   }
@@ -495,7 +495,7 @@ Add this to your agent's MCP configuration:
 
 ```json
 {
-  "hearme": {
+  "hear-me": {
     "audio": {
       "engine": "vibevoice",
       "fallback_engine": "kokoro",
@@ -507,14 +507,14 @@ Add this to your agent's MCP configuration:
       "length": "balanced"
     },
     "output": {
-      "dir": ".hearme"
+      "dir": ".hear-me"
     },
     "privacy": {
       "allow_network": false
     },
     "installation": {
-      "models_dir": "~/.hearme/models",
-      "venv_path": "~/.hearme/venv"
+      "models_dir": "~/.hear-me/models",
+      "venv_path": "~/.hear-me/venv"
     }
   }
 }
@@ -525,11 +525,11 @@ Add this to your agent's MCP configuration:
 ## 16. Output Artifacts
 
 ```
-.hearme/
-  hearme.audio.mp3
-  hearme.script.txt
-  hearme.script.json
-  hearme.meta.json
+.hear-me/
+  hear-me.audio.mp3
+  hear-me.script.txt
+  hear-me.script.json
+  hear-me.meta.json
 ```
 
 ---
@@ -546,7 +546,7 @@ Add this to your agent's MCP configuration:
 ## 18. Security & Privacy
 
 > [!CAUTION]
-> HEARME is **local-first by default**. No data leaves the user's machine unless they explicitly consent.
+> hear-me is **local-first by default**. No data leaves the user's machine unless they explicitly consent.
 
 ### Privacy Principles
 
@@ -588,7 +588,7 @@ These actions:
 
 ## 21. Extensibility (Future)
 
-- CI-based HEARME generation
+- CI-based hear-me generation
 - Multi-language narration
 - Accessibility-focused output
 - Repo-wide audio indexing
@@ -597,7 +597,7 @@ These actions:
 
 ## 22. Final Positioning
 
-HEARME is not a TTS tool or summarizer.
+hear-me is not a TTS tool or summarizer.
 
-HEARME **is**:
+hear-me **is**:
 A local-first, privacy-respecting, documentation-to-audio execution layer powered by the intelligence of the invoking agent.

@@ -1,5 +1,5 @@
 """
-HEARME Audio Context Preparer
+hear-me Audio Context Preparer
 
 Transforms document structure into LLM-ready context for audio narration.
 Handles non-speakable elements and generates speaker hints.

@@ -1,8 +1,8 @@
-# HEARME Implementation Roadmap
+# hear-me Implementation Roadmap
 
-> **Building the tool that replaces README.md with hearme.mp3**
+> **Building the tool that replaces README.md with hear-me.mp3**
 
-This document tracks the phased implementation of HEARME MCP – transforming project documentation into natural, conversational audio.
+This document tracks the phased implementation of hear-me MCP – transforming project documentation into natural, conversational audio.
 
 ---
 
@@ -28,14 +28,14 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 
 - [x] **1.3 Configuration System**
   - [x] Define JSON configuration schema
-  - [x] Implement config file discovery (`hearme.json`, MCP settings)
+  - [x] Implement config file discovery (`hear-me.json`, MCP settings)
   - [x] Create config validation and defaults
   - [x] Handle privacy settings (`allow_network`)
 
 ### Deliverables
 - ✅ MCP server responds to `check_prerequisites` tool
 - ✅ Configuration loads and validates correctly
-- ✅ Server runs locally with `python -m hearme`
+- ✅ Server runs locally with `python -m hear-me`
 - ✅ 18 tests passing
 
 ---
@@ -110,7 +110,7 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
   - [x] Export to configured format
 
 - [x] **3.5 Output Persistence (`persist_outputs`)**
-  - [x] Write audio file to `.hearme/` directory
+  - [x] Write audio file to `.hear-me/` directory
   - [x] Generate script files (txt, json)
   - [x] Create metadata manifest
   - [x] Handle file naming and overwrites
