@@ -182,6 +182,11 @@ echo -e "${BLUE}🔊 Installing $ENGINE engine...${NC}"
 case $ENGINE in
     dia2)
         echo -e "${YELLOW}⚠️  Installing Dia2 dependencies (large download)...${NC}"
+        # Install Dia2 directly from upstream to ensure module availability
+        pip install "dia2 @ git+https://github.com/nari-labs/dia2" --upgrade --quiet
+        # Install known runtime deps explicitly (Dia2 repo relies on uv/lockfile)
+        pip install torch transformers huggingface-hub numpy soundfile safetensors scipy librosa inflect protobuf sentencepiece tiktoken --upgrade --quiet
+        # Also install hear-me extras (keeps pyproject deps aligned)
         pip install -e "$ROOT_DIR[dia2]" --upgrade --quiet
         
         # Pre-download model weights
@@ -257,6 +262,16 @@ if python -m hearme.troubleshoot; then
 else
     echo -e "${RED}❌ System checks failed. See errors above.${NC}"
     exit 1
+fi
+
+# Verify Dia2 importability if selected
+if [ "$ENGINE" = "dia2" ]; then
+    echo ""
+    echo -e "${BLUE}🧪 Verifying Dia2 module import...${NC}"
+    python - <<'PY'
+from dia2 import Dia2, GenerationConfig, SamplingConfig
+print("✅ Dia2 import OK")
+PY
 fi
 
 # Smoke test: render a short sample with the selected engine

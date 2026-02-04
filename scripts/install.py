@@ -264,7 +264,7 @@ def install_engine(name, root_dir):
     engine = ENGINES[name]
     packages = [engine["package"]] + engine.get("requires", [])
 
-    if name == "dia2" and not (root_dir / "pyproject.toml").exists():
+    if name == "dia2":
         packages = [
             "dia2 @ git+https://github.com/nari-labs/dia2",
             "torch",
