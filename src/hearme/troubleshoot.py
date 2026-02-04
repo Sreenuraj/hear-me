@@ -82,13 +82,16 @@ def verify_engines() -> List[DiagnosticResult]:
                 
                 # Check hardware acceleration if applicable
                 if name == "dia2":
-                    import torch
-                    if torch.backends.mps.is_available():
-                        msg += " (MPS accelerated)"
-                    elif torch.cuda.is_available():
-                        msg += " (CUDA accelerated)"
-                    else:
-                        msg += " (CPU only)"
+                    try:
+                        import torch
+                        if torch.backends.mps.is_available():
+                            msg += " (MPS accelerated)"
+                        elif torch.cuda.is_available():
+                            msg += " (CUDA accelerated)"
+                        else:
+                            msg += " (CPU only)"
+                    except Exception:
+                        msg += " (acceleration unknown; torch not in hear-me venv)"
             else:
                 status = "WARN"
                 msg = f"Engine '{name}' installed but not available (missing deps?)"

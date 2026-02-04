@@ -216,8 +216,13 @@ case $ENGINE in
             echo -e "${GREEN}✅ Dia2 model cache found, skipping download${NC}"
         else
             echo "[S1] Hello. [S2] This is a Dia2 install check." > "$DIA2_DIR/install-check.txt"
-            (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
-            DIA2_CLI_OK=1
+            for attempt in 1 2; do
+                if (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav); then
+                    DIA2_CLI_OK=1
+                    break
+                fi
+                echo -e "${YELLOW}⚠️  Dia2 download attempt ${attempt} failed, retrying...${NC}"
+            done
         fi
         
         echo -e "${GREEN}✅ Dia2 installed (multi-speaker)${NC}"

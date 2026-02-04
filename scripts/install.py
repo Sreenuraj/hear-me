@@ -263,12 +263,16 @@ def install_dia2_repo(install_dir):
     else:
         input_path = repo_dir / "install-check.txt"
         input_path.write_text("[S1] Hello. [S2] This is a Dia2 install check.", encoding="utf-8")
-        subprocess.run(
-            ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
-            cwd=str(repo_dir),
-            check=False,
-            env=env,
-        )
+        for attempt in range(1, 3):
+            result = subprocess.run(
+                ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
+                cwd=str(repo_dir),
+                check=False,
+                env=env,
+            )
+            if result.returncode == 0:
+                break
+            print(f"⚠️  Dia2 download attempt {attempt} failed, retrying...")
 
     return repo_dir
 
