@@ -3,7 +3,7 @@ Tests for hear-me prerequisite detection system.
 """
 
 import pytest
-from hear-me.prerequisites import (
+from hearme.prerequisites import (
     detect_platform,
     check_python_version,
     check_command_exists,

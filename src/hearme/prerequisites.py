@@ -142,131 +142,58 @@ def check_command_exists(cmd: str) -> DependencyStatus:
     return DependencyStatus(installed=True, version=version, path=path)
 
 
-def check_audio_engine(engine: str) -> EngineStatus:
-    """Check if an audio engine is available."""
-    # Engine-specific checks
-    engine_checks = {
-        "vibevoice": _check_vibevoice,
-        "dia2": _check_dia2,
-        "chattts": _check_chattts,
-        "kokoro": _check_kokoro,
-        "piper": _check_piper,
-        "xtts": _check_xtts,
+def _get_engine_deps(engine: str) -> list[str]:
+    """Get required dependencies for an engine."""
+    deps = {
+        "vibevoice": ["torch", "transformers", "vibevoice"],
+        "dia2": ["torch", "soundfile", "dia"],
+        "chattts": ["torch", "ChatTTS"],
+        "kokoro": ["onnxruntime", "kokoro"],
+        "piper": ["piper-tts"],
+        "xtts": ["torch", "TTS"],
     }
-    
-    checker = engine_checks.get(engine.lower())
-    if checker:
-        return checker()
-    
-    return EngineStatus(installed=False, install_command=f"Unknown engine: {engine}")
+    return deps.get(engine.lower(), [])
 
 
-def _check_vibevoice() -> EngineStatus:
-    """Check VibeVoice availability."""
+def _get_install_command(engine: str) -> str | None:
+    """Get install command for an engine."""
+    commands = {
+        "vibevoice": "pip install vibevoice",
+        "dia2": "pip install dia-tts",
+        "chattts": "pip install ChatTTS",
+        "kokoro": "pip install kokoro-onnx",
+        "piper": "pip install piper-tts",
+        "xtts": "pip install TTS",
+    }
+    return commands.get(engine.lower())
+
+
+def check_audio_engine(engine: str) -> EngineStatus:
+    """
+    Check if an audio engine is available using the registry.
+    
+    This ensures consistent detection with render_audio and other tools.
+    """
     try:
-        # VibeVoice is typically installed as a Python package
-        import importlib.util
-        spec = importlib.util.find_spec("vibevoice")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=["torch", "transformers"])
+        # Import here to avoid circular imports
+        from hearme.engines.registry import get_engine
+        
+        # Try to get engine from registry
+        engine_instance = get_engine(engine.lower())
+        
+        if engine_instance and engine_instance.is_available():
+            return EngineStatus(
+                installed=True,
+                required_deps=_get_engine_deps(engine),
+            )
     except Exception:
-        pass
+        pass  # Fall through to not-installed case
     
+    # Not available - return install hints
     return EngineStatus(
         installed=False,
-        required_deps=["torch", "transformers", "vibevoice"],
-        install_command="pip install vibevoice"
-    )
-
-
-def _check_dia2() -> EngineStatus:
-    """Check Dia2 availability."""
-    try:
-        import importlib.util
-        spec = importlib.util.find_spec("dia")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=["torch", "soundfile"])
-    except Exception:
-        pass
-    
-    return EngineStatus(
-        installed=False,
-        required_deps=["torch", "soundfile", "dia"],
-        install_command="pip install dia-tts"
-    )
-
-
-def _check_chattts() -> EngineStatus:
-    """Check ChatTTS availability."""
-    try:
-        import importlib.util
-        spec = importlib.util.find_spec("ChatTTS")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=["torch"])
-    except Exception:
-        pass
-    
-    return EngineStatus(
-        installed=False,
-        required_deps=["torch", "ChatTTS"],
-        install_command="pip install ChatTTS"
-    )
-
-
-def _check_kokoro() -> EngineStatus:
-    """Check Kokoro availability."""
-    try:
-        import importlib.util
-        spec = importlib.util.find_spec("kokoro")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=["onnxruntime"])
-    except Exception:
-        pass
-    
-    return EngineStatus(
-        installed=False,
-        required_deps=["onnxruntime", "kokoro"],
-        install_command="pip install kokoro-onnx"
-    )
-
-
-def _check_piper() -> EngineStatus:
-    """Check Piper TTS availability."""
-    # Check for piper command
-    piper_path = shutil.which("piper")
-    if piper_path:
-        return EngineStatus(installed=True, required_deps=[])
-    
-    # Check for Python package
-    try:
-        import importlib.util
-        spec = importlib.util.find_spec("piper")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=[])
-    except Exception:
-        pass
-    
-    return EngineStatus(
-        installed=False,
-        required_deps=["piper-tts"],
-        install_command="pip install piper-tts"
-    )
-
-
-def _check_xtts() -> EngineStatus:
-    """Check XTTS-v2 (Coqui) availability."""
-    try:
-        import importlib.util
-        spec = importlib.util.find_spec("TTS")
-        if spec is not None:
-            return EngineStatus(installed=True, required_deps=["torch"])
-    except Exception:
-        pass
-    
-    return EngineStatus(
-        installed=False,
-        required_deps=["torch", "TTS"],
-        install_command="pip install TTS"
+        required_deps=_get_engine_deps(engine),
+        install_command=_get_install_command(engine),
     )
 
 
