@@ -339,7 +339,7 @@ def install_hearme(root_dir):
 def verify_hearme_deps():
     """Verify core hear-me dependencies are installed."""
     try:
-        import importlib
+        import importlib.util
         req = ["mcp", "pydantic", "pathspec"]
         missing = [r for r in req if importlib.util.find_spec(r) is None]
         if missing:

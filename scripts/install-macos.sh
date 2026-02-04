@@ -196,7 +196,7 @@ fi
 # Verify hear-me core deps (retry install if missing)
 echo -e "${BLUE}🧪 Verifying hear-me core dependencies...${NC}"
 if ! python - <<'PY'
-import importlib
+import importlib.util
 import sys
 
 req = ["mcp", "pydantic", "pathspec"]
@@ -210,7 +210,8 @@ then
     echo -e "${YELLOW}⚠️  hear-me deps missing, reinstalling...${NC}"
     pip install -e "$ROOT_DIR" --quiet
     python - <<'PY'
-import importlib, sys
+import importlib.util
+import sys
 req = ["mcp", "pydantic", "pathspec"]
 missing = [r for r in req if importlib.util.find_spec(r) is None]
 if missing:
