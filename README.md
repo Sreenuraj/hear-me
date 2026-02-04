@@ -1,25 +1,53 @@
 # HEARME MCP
 
-> **Turn documentation into listenable understanding**
+> **Replace your README.md with a hearme.mp3**
 
-HEARME is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) implementation that converts project documentation into natural, conversational audio – designed for listening, not reading.
+HEARME is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) that transforms your project documentation into natural, conversational audio files.
 
-## 🎯 What It Does
+Instead of asking users to *read* your README, let them *listen* to it.
 
-Unlike simple text-to-speech, HEARME creates an **audio experience**:
+---
 
-- 🗣️ Multi-speaker conversations (like Google NotebookLM's Audio Overview)
-- 🎙️ Narrative walkthroughs of your codebase
-- 📖 Spoken explanations optimized for passive listening
-- 🤖 Agent-driven – your AI agent controls tone, personality, and structure
+## 💡 The Idea
+
+```
+README.md  →  HEARME MCP  →  hearme.mp3
+```
+
+1. **You** plug HEARME into your AI agent (PostQode, Copilot, Cline, etc.)
+2. **Select** the documents you want to convert (README, architecture docs, guides)
+3. **Generate** a `hearme.mp3` – a podcast-style audio explanation of your project
+4. **Ship it** alongside your code, so users can listen instead of read
+
+Think Google NotebookLM's "Audio Overview" – but for any codebase, running locally on your machine.
+
+---
+
+## 🎧 What You Get
+
+| Traditional | With HEARME |
+|-------------|-------------|
+| `README.md` – walls of text | `hearme.mp3` – conversational audio |
+| Users skim or skip | Users listen while commuting/coding |
+| Static documentation | Dynamic, engaging explanations |
+| One format fits none | Audio-first understanding |
+
+**Example outputs:**
+- 🗣️ *"Hey, welcome to the project! Let me walk you through what this does..."*
+- 🎙️ Multi-speaker discussions explaining architecture decisions
+- 📖 Narrative walkthroughs of your codebase
+
+---
 
 ## ✨ Key Features
 
 - **Local-first** – All processing happens on your machine
 - **Privacy-respecting** – No data leaves your device without consent
-- **Agent-agnostic** – Works with any MCP-compatible agent (PostQode, Copilot, Cline, etc.)
-- **Multi-engine support** – VibeVoice, Dia2, ChatTTS, and more
-- **Single-command install** – Platform-specific scripts handle everything
+- **Agent-agnostic** – Works with any MCP-compatible agent
+- **Multi-speaker** – Natural conversations with distinct voices
+- **Single-command install** – Platform scripts handle setup
+
+---
 
 ## 🚀 Quick Start
 
@@ -27,19 +55,18 @@ Unlike simple text-to-speech, HEARME creates an **audio experience**:
 
 ```bash
 # macOS
-curl -sSL https://raw.githubusercontent.com/hearme-mcp/hearme/main/scripts/install-macos.sh | bash
+./scripts/install-macos.sh --engine vibevoice
 
 # Linux
-curl -sSL https://raw.githubusercontent.com/hearme-mcp/hearme/main/scripts/install-linux.sh | bash
+./scripts/install-linux.sh --engine vibevoice
 
-# Or with Python (cross-platform)
-pip install hearme-mcp
-hearme-install --engine vibevoice
+# Cross-platform
+pip install hearme-mcp && hearme-install --engine vibevoice
 ```
 
 ### Add to Your Agent
 
-After installation, add the generated config to your agent's MCP settings:
+After installation, add the generated config to your MCP settings:
 
 ```json
 {
