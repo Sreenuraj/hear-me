@@ -193,6 +193,33 @@ else
     pip install hear-me --quiet 2>/dev/null || { echo -e "${RED}❌ Could not install 'hear-me'. Run this script from within the repo.${NC}"; exit 1; }
 fi
 
+# Verify hear-me core deps (retry install if missing)
+echo -e "${BLUE}🧪 Verifying hear-me core dependencies...${NC}"
+if ! python - <<'PY'
+import importlib
+import sys
+
+req = ["mcp", "pydantic", "pathspec"]
+missing = [r for r in req if importlib.util.find_spec(r) is None]
+if missing:
+    print("Missing:", ",".join(missing))
+    sys.exit(1)
+print("hearme core deps OK")
+PY
+then
+    echo -e "${YELLOW}⚠️  hear-me deps missing, reinstalling...${NC}"
+    pip install -e "$ROOT_DIR" --quiet
+    python - <<'PY'
+import importlib, sys
+req = ["mcp", "pydantic", "pathspec"]
+missing = [r for r in req if importlib.util.find_spec(r) is None]
+if missing:
+    print("Missing:", ",".join(missing))
+    sys.exit(1)
+print("hearme core deps OK")
+PY
+fi
+
 # Install TTS engine
 echo ""
 echo -e "${BLUE}🔊 Installing $ENGINE engine...${NC}"
@@ -210,17 +237,27 @@ case $ENGINE in
         (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv sync)
         echo -e "${YELLOW}🧪 Verifying Dia2 runtime dependencies (torch)...${NC}"
         if ! (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run python - <<'PY'
-import torch
-print("torch OK", torch.__version__)
+import importlib, sys
+req = ["torch", "transformers", "safetensors", "soundfile", "numpy"]
+missing = [r for r in req if importlib.util.find_spec(r) is None]
+if missing:
+    print("Missing:", ",".join(missing))
+    sys.exit(1)
+print("dia2 deps OK")
 PY
         ); then
             echo -e "${YELLOW}⚠️  Dia2 dependency check failed, retrying uv sync...${NC}"
             (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv sync)
             (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run python - <<'PY'
-import torch
-print("torch OK", torch.__version__)
+import importlib, sys
+req = ["torch", "transformers", "safetensors", "soundfile", "numpy"]
+missing = [r for r in req if importlib.util.find_spec(r) is None]
+if missing:
+    print("Missing:", ",".join(missing))
+    sys.exit(1)
+print("dia2 deps OK")
 PY
-            ) || { echo -e "${RED}❌ Dia2 dependencies not installed (torch missing).${NC}"; exit 1; }
+            ) || { echo -e "${RED}❌ Dia2 dependencies not installed (missing required libs).${NC}"; exit 1; }
         fi
         
         # Pre-download model weights via CLI (this will also validate runtime)

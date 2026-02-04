@@ -255,15 +255,25 @@ def install_dia2_repo(install_dir):
     env.pop("VIRTUAL_ENV", None)
     subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
 
-    # Verify torch in dia2 runtime, retry sync if needed
-    print("🧪 Verifying Dia2 runtime dependencies (torch)...")
-    check = subprocess.run(["uv", "run", "python", "-c", "import torch; print(torch.__version__)"], cwd=str(repo_dir), check=False, env=env)
+    # Verify dia2 runtime deps, retry sync if needed
+    print("🧪 Verifying Dia2 runtime dependencies...")
+    check = subprocess.run(
+        ["uv", "run", "python", "-c", "import importlib; req=['torch','transformers','safetensors','soundfile','numpy']; missing=[r for r in req if importlib.util.find_spec(r) is None]; print('missing',missing); exit(1 if missing else 0)"],
+        cwd=str(repo_dir),
+        check=False,
+        env=env,
+    )
     if check.returncode != 0:
         print("⚠️  Dia2 dependency check failed, retrying uv sync...")
         subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
-        check = subprocess.run(["uv", "run", "python", "-c", "import torch; print(torch.__version__)"], cwd=str(repo_dir), check=False, env=env)
+        check = subprocess.run(
+            ["uv", "run", "python", "-c", "import importlib; req=['torch','transformers','safetensors','soundfile','numpy']; missing=[r for r in req if importlib.util.find_spec(r) is None]; print('missing',missing); exit(1 if missing else 0)"],
+            cwd=str(repo_dir),
+            check=False,
+            env=env,
+        )
         if check.returncode != 0:
-            print("❌ Dia2 dependencies not installed (torch missing).")
+            print("❌ Dia2 dependencies not installed (missing required libs).")
             sys.exit(1)
 
     # Pre-download via CLI to validate (skip if cache already exists)
@@ -324,6 +334,20 @@ def install_hearme(root_dir):
         
     print("❌ Failed to install hear-me")
     return False
+
+
+def verify_hearme_deps():
+    """Verify core hear-me dependencies are installed."""
+    try:
+        import importlib
+        req = ["mcp", "pydantic", "pathspec"]
+        missing = [r for r in req if importlib.util.find_spec(r) is None]
+        if missing:
+            print("Missing hear-me deps:", ",".join(missing))
+            return False
+        return True
+    except Exception:
+        return False
 
 
 def install_engine(name, root_dir):
@@ -496,6 +520,11 @@ def main():
     # Install hear-me
     if not install_hearme(root_dir):
         sys.exit(1)
+    if not verify_hearme_deps():
+        print("⚠️  hear-me deps missing, reinstalling...")
+        if not install_hearme(root_dir) or not verify_hearme_deps():
+            print("❌ hear-me dependencies not installed.")
+            sys.exit(1)
     
     # Install engines
     for engine in engines:
