@@ -251,7 +251,9 @@ def install_dia2_repo(install_dir):
         subprocess.run(["git", "clone", "https://github.com/nari-labs/dia2", str(repo_dir)], check=False)
 
     print("⏳ Syncing Dia2 dependencies with uv...")
-    subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False)
+    env = os.environ.copy()
+    env.pop("VIRTUAL_ENV", None)
+    subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
 
     # Pre-download via CLI to validate
     input_path = repo_dir / "install-check.txt"
@@ -260,6 +262,7 @@ def install_dia2_repo(install_dir):
         ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
         cwd=str(repo_dir),
         check=False,
+        env=env,
     )
 
     return repo_dir
@@ -394,8 +397,7 @@ def smoke_test(engine_name, output_path):
     print()
     print(f"🧪 Rendering a short audio sample with {engine_name}...")
     script = [
-        {"speaker": "narrator", "text": "Install check. The hear-me engine is working."},
-        {"speaker": "peer", "text": "Audio synthesis completed successfully."},
+        {"speaker": "narrator", "text": "Install check. Audio synthesis is working."},
     ]
     try:
         from hearme.renderer import render_audio

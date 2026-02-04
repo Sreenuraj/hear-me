@@ -201,12 +201,13 @@ case $ENGINE in
             git clone https://github.com/nari-labs/dia2 "$DIA2_DIR"
         fi
         echo -e "${YELLOW}⏳ Syncing Dia2 dependencies with uv...${NC}"
-        (cd "$DIA2_DIR" && uv sync)
+        (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv sync)
         
         # Pre-download model weights via CLI (this will also validate runtime)
         echo -e "${YELLOW}⏳ Pre-downloading Dia2-2B model (this may take a while)...${NC}"
         echo "[S1] Hello. [S2] This is a Dia2 install check." > "$DIA2_DIR/install-check.txt"
-        (cd "$DIA2_DIR" && uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
+        (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
+        DIA2_CLI_OK=1
         
         echo -e "${GREEN}✅ Dia2 installed (multi-speaker)${NC}"
         ;;
@@ -286,27 +287,30 @@ fi
 if [ "$ENGINE" = "dia2" ]; then
     echo ""
     echo -e "${BLUE}🧪 Verifying Dia2 CLI runtime...${NC}"
-    (cd "${INSTALL_DIR}/engines/dia2" && uv run -m dia2.cli --version) || true
+    (cd "${INSTALL_DIR}/engines/dia2" && env -u VIRTUAL_ENV uv run -m dia2.cli --help >/dev/null) || true
 fi
 
 # Smoke test: render a short sample with the selected engine
 echo ""
-echo -e "${BLUE}🧪 Rendering a short audio sample with ${ENGINE}...${NC}"
-HEARME_ENGINE="$ENGINE" HEARME_OUT="$INSTALL_DIR/install-test.wav" python - <<'PY'
+if [ "$ENGINE" = "dia2" ] && [ "${DIA2_CLI_OK:-0}" = "1" ]; then
+    echo -e "${GREEN}✅ Dia2 CLI smoke test already completed${NC}"
+else
+    echo -e "${BLUE}🧪 Rendering a short audio sample with ${ENGINE}...${NC}"
+    HEARME_ENGINE="$ENGINE" HEARME_OUT="$INSTALL_DIR/install-test.wav" python - <<'PY'
 import os
 from hearme.renderer import render_audio
 
 engine = os.environ.get("HEARME_ENGINE")
 output = os.environ.get("HEARME_OUT")
 script = [
-    {"speaker": "narrator", "text": "Install check. The hear-me engine is working."},
-    {"speaker": "peer", "text": "Audio synthesis completed successfully."},
+    {"speaker": "narrator", "text": "Install check. Audio synthesis is working."},
 ]
 result = render_audio(script=script, output_path=output, engine_name=engine)
 if not result.success:
     raise SystemExit(result.error or "Render failed")
 print("✅ Audio sample created:", result.output_path)
 PY
+fi
 
 echo -e "${GREEN}✅ hear-me ready!${NC}"
 

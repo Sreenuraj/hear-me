@@ -295,7 +295,9 @@ class Dia2Engine(BaseEngine):
                         "--input", str(input_path),
                         str(output_path),
                     ]
-                    subprocess.run(cmd, cwd=str(repo), check=True)
+                    env = os.environ.copy()
+                    env.pop("VIRTUAL_ENV", None)
+                    subprocess.run(cmd, cwd=str(repo), check=True, env=env)
 
                     if not output_path.exists():
                         return SynthesisResult(success=False, error="Dia2 CLI did not create output")
