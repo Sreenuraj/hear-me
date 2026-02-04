@@ -1,5 +1,7 @@
 # hear-me MCP
 
+**🎧 This repo already includes a `hear-me.wav` so you can listen right away.**
+
 > **Replace your README.md with a hear-me.mp3**
 
 hear-me is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) that transforms your project documentation into natural, conversational audio files.
