@@ -135,7 +135,15 @@ def list_engines() -> list[EngineCapabilities]:
 
 
 def register_default_engines() -> None:
-    """Register the default set of engines."""
+    """
+    Register the default set of engines.
+    
+    Priority order (lower = higher priority):
+    - Dia2 (10): Best quality, multi-speaker
+    - Kokoro (30): Good quality, single speaker
+    - Piper (50): Fast, lightweight
+    - Mock (100): Development only
+    """
     # Import engines here to avoid circular imports
     from hearme.engines.mock import MockEngine
     
@@ -144,11 +152,24 @@ def register_default_engines() -> None:
     
     # Try to import optional engines
     try:
+        from hearme.engines.dia2 import Dia2Engine
+        EngineRegistry.register(Dia2Engine, priority=10)  # Highest priority
+    except ImportError:
+        logger.debug("Dia2 engine not available")
+    
+    try:
         from hearme.engines.kokoro import KokoroEngine
         EngineRegistry.register(KokoroEngine, priority=30)
     except ImportError:
         logger.debug("Kokoro engine not available")
+    
+    try:
+        from hearme.engines.piper import PiperEngine
+        EngineRegistry.register(PiperEngine, priority=50)
+    except ImportError:
+        logger.debug("Piper engine not available")
 
 
 # Auto-register on import
 register_default_engines()
+
