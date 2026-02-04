@@ -42,6 +42,7 @@ except ImportError:
 from mcp.server.fastmcp import FastMCP
 
 from hearme.config import load_config
+from hearme.cleanup import cleanup_resources as do_cleanup_resources
 from hearme.prerequisites import check_all_prerequisites
 from hearme.scanner import scan_workspace as do_scan_workspace
 from hearme.analyzer import analyze_documents as do_analyze_documents
@@ -108,6 +109,25 @@ async def analyze_documents(documents: list[str], root: str = ".") -> dict:
     Args:
         documents: List of document paths to analyze
         root: Root directory for resolving paths
+    
+    Note:
+        If you already have explicit document paths, you can call this
+        directly and skip scan_workspace.
+    """
+    result = do_analyze_documents(documents, root)
+    return result.model_dump()
+
+
+# =============================================================================
+# Tool 3b: analyze_provided_documents (alias for explicit doc lists)
+# =============================================================================
+
+@mcp.tool()
+async def analyze_provided_documents(documents: list[str], root: str = ".") -> dict:
+    """
+    Analyze explicitly provided document paths.
+    
+    Use this when you already have a list of docs and want to skip scanning.
     """
     result = do_analyze_documents(documents, root)
     return result.model_dump()
@@ -135,6 +155,9 @@ async def propose_audio_plan(
         mode: Audio mode (explainer, discussion, narrative, tour, agent-decided)
         length: Depth level (overview, balanced, thorough)
         root: Root directory for resolving paths
+    
+    Note:
+        If documents are explicitly provided, you can skip scan_workspace.
     """
     # Analyze documents first to get structure
     analysis = do_analyze_documents(documents, root)
@@ -171,12 +194,20 @@ async def prepare_audio_context(
         mode: Length mode (overview, balanced, thorough)
         root: Root directory for resolving paths
         plan: Optional audio plan from propose_audio_plan
+    
+    Note:
+        If documents are explicitly provided, you can skip scan_workspace.
     """
     # Analyze documents first
     analysis = do_analyze_documents(documents, root)
+
+    # Auto-adjust length for very large inputs when mode not explicitly set
+    effective_mode = mode
+    if mode == "balanced" and analysis.total_words > 3000:
+        effective_mode = "overview"
     
     # Prepare context
-    context = do_prepare_context(analysis.documents, mode=mode, plan=plan)
+    context = do_prepare_context(analysis.documents, mode=effective_mode, plan=plan)
     return context.model_dump()
 
 
@@ -191,7 +222,8 @@ async def render_audio(
     voice_map: dict | None = None,
     engine: str | None = None,
     persist: bool = True,
-    root: str = "."
+    root: str = ".",
+    cleanup: bool = True,
 ) -> dict:
     """
     Render audio from an agent-generated script.
@@ -203,9 +235,10 @@ async def render_audio(
         script: List of {speaker, text} segments
         output_path: Where to save the audio file
         voice_map: Speaker name to voice ID mapping
-        engine: Which engine to use (None for best available)
+        engine: Which engine to use (None uses configured default)
         persist: Whether to save script and manifest files
         root: Project root directory
+        cleanup: Whether to cleanup engine resources after render
     
     Example script:
         [
@@ -228,6 +261,11 @@ async def render_audio(
         if not path.is_absolute():
             output_path = str(Path(root) / path)
     
+    # Use configured default engine if not provided
+    if engine is None:
+        config = load_config()
+        engine = config.audio.engine
+
     # Render audio
     result = do_render(
         script=script,
@@ -237,7 +275,13 @@ async def render_audio(
     )
     
     if not result.success:
-        return result.model_dump()
+        response = result.model_dump()
+        if cleanup:
+            do_cleanup_resources()
+        if os.environ.get("HEARME_AUTOSHUTDOWN") == "1":
+            import threading
+            threading.Timer(0.5, lambda: os._exit(0)).start()
+        return response
     
     # Persist outputs if requested
     if persist:
@@ -256,12 +300,23 @@ async def render_audio(
             engine_used=result.engine_used,
             root=persist_root,
         )
-        return {
+        response = {
             **result.model_dump(),
             **persist_result,
         }
-    
-    return result.model_dump()
+    else:
+        response = result.model_dump()
+
+    # Cleanup resources after render if requested
+    if cleanup:
+        do_cleanup_resources()
+
+    # Optional auto-shutdown for one-shot usage
+    if os.environ.get("HEARME_AUTOSHUTDOWN") == "1":
+        import threading
+        threading.Timer(0.5, lambda: os._exit(0)).start()
+
+    return response
 
 
 # =============================================================================
@@ -279,21 +334,7 @@ async def cleanup_resources() -> dict:
     This is a safety net - normally resources are cleaned automatically
     after each render_audio call.
     """
-    from hearme.engines.registry import EngineRegistry
-    
-    cleaned = []
-    
-    for name in EngineRegistry._instances:
-        engine = EngineRegistry._instances[name]
-        if hasattr(engine, 'is_loaded') and engine.is_loaded():
-            engine.unload()
-            cleaned.append(name)
-    
-    return {
-        "success": True,
-        "cleaned_engines": cleaned,
-        "message": f"Cleaned {len(cleaned)} engine(s). Memory freed."
-    }
+    return do_cleanup_resources()
 
 
 # =============================================================================

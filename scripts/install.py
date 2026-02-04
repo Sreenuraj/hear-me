@@ -440,6 +440,7 @@ def main():
     parser.add_argument("--engine", help="TTS engine to install")
     parser.add_argument("--profile", choices=PROFILES.keys(), help="Installation profile")
     parser.add_argument("--non-interactive", action="store_true", help="Non-interactive mode")
+    parser.add_argument("--skip-smoke-test", action="store_true", help="Skip final audio smoke test")
     args = parser.parse_args()
     
     print_header()
@@ -489,8 +490,10 @@ def main():
     
     # Verify
     verify_installation()
-    if engines:
+    if engines and not args.skip_smoke_test:
         smoke_test(engine_name, str(install_dir / "install-test.wav"))
+    elif args.skip_smoke_test:
+        print("⚠️  Skipping smoke test (per flag)")
     
     # Generate and display MCP config
     print()

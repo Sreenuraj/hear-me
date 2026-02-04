@@ -83,6 +83,9 @@ After installation, paste the generated JSON config into your MCP settings (e.g.
 Ask your agent:
 > "Create a 2-person podcast about this project's architecture"
 
+Tip: If you already know which docs to include, you can skip scanning and pass
+the file list directly to analysis/context generation.
+
 ---
 
 ## 🔊 Audio Engines
@@ -131,3 +134,14 @@ hear-me is **local-first by default**:
 <p align="center">
   <b>hear-me</b> – Because documentation should be heard, not just read.
 </p>
+
+## 🧹 Uninstall / Reset
+
+If you want to remove all hear-me artifacts (venv, models, engines, outputs),
+use the destroy-all script:
+
+```bash
+./scripts/destroy-all.sh
+```
+
+Add `--yes` to skip the confirmation prompt.

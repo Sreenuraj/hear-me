@@ -20,6 +20,7 @@ echo ""
 ENGINE="kokoro"  # Default engine
 PROFILE="recommended"
 INSTALL_DIR="${HOME}/.hear-me"
+SKIP_SMOKE_TEST=0
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -35,6 +36,10 @@ while [[ $# -gt 0 ]]; do
             INSTALL_DIR="$2"
             shift 2
             ;;
+        --skip-smoke-test)
+            SKIP_SMOKE_TEST=1
+            shift 1
+            ;;
         --help)
             echo "Usage: ./install-macos.sh [OPTIONS]"
             echo ""
@@ -42,6 +47,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --engine ENGINE    TTS engine: dia2, kokoro, piper (default: kokoro)"
             echo "  --profile PROFILE  Installation profile: minimal, recommended, full"
             echo "  --dir PATH         Installation directory (default: ~/.hear-me)"
+            echo "  --skip-smoke-test  Skip the final audio render smoke test"
             echo ""
             echo "Engines:"
             echo "  dia2     NotebookLM-like multi-speaker (requires high RAM + disk)"
@@ -297,7 +303,9 @@ fi
 
 # Smoke test: render a short sample with the selected engine
 echo ""
-if [ "$ENGINE" = "dia2" ] && [ "${DIA2_CLI_OK:-0}" = "1" ]; then
+if [ "$SKIP_SMOKE_TEST" -eq 1 ]; then
+    echo -e "${YELLOW}⚠️  Skipping smoke test (per flag)${NC}"
+elif [ "$ENGINE" = "dia2" ] && [ "${DIA2_CLI_OK:-0}" = "1" ]; then
     echo -e "${GREEN}✅ Dia2 CLI smoke test already completed${NC}"
 else
     echo -e "${BLUE}🧪 Rendering a short audio sample with ${ENGINE}...${NC}"

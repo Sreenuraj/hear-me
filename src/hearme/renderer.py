@@ -16,6 +16,7 @@ from typing import Literal
 
 from hearme.engines import get_engine, AudioEngine
 from hearme.engines.base import AudioFormat, SynthesisResult, SynthesisSegment
+from hearme.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +138,35 @@ def concatenate_wav(segments: list[SynthesisSegment], sample_rate: int = 24000) 
     return output.getvalue()
 
 
+def _chunk_segments(
+    segments: list[dict],
+    max_chars: int,
+) -> list[list[dict]]:
+    """Chunk script segments by character count."""
+    if max_chars <= 0:
+        return [segments]
+
+    chunks: list[list[dict]] = []
+    current: list[dict] = []
+    current_chars = 0
+
+    for seg in segments:
+        text = seg.get("text", "")
+        seg_len = len(text)
+        if current and current_chars + seg_len > max_chars:
+            chunks.append(current)
+            current = [seg]
+            current_chars = seg_len
+        else:
+            current.append(seg)
+            current_chars += seg_len
+
+    if current:
+        chunks.append(current)
+
+    return chunks
+
+
 def render_audio(
     script: list[dict],
     output_path: str = ".hear-me/hear-me.audio.wav",
@@ -187,6 +217,7 @@ def render_audio(
     
     # Convert to format expected by engine
     script_dicts = [{"speaker": s.speaker, "text": s.text} for s in segments]
+    total_chars = sum(len(s["text"]) for s in script_dicts)
     
     # =========================================================================
     # BULLETPROOF: Use context manager for guaranteed cleanup
@@ -196,12 +227,59 @@ def render_audio(
         engine.load()
         logger.info(f"Engine {engine.name} loaded")
         
-        # Synthesize
-        result = engine.synthesize_multi(
-            segments=script_dicts,
-            voice_map=voice_map,
-            format=format,
-        )
+        # Synthesize (chunked for Dia2)
+        if engine.name == "dia2":
+            config = load_config()
+            max_chars = getattr(config.audio, "max_chars_per_chunk", 2000)
+            chunks = _chunk_segments(script_dicts, max_chars) if total_chars > max_chars else [script_dicts]
+
+            all_segments: list[SynthesisSegment] = []
+            total_duration = 0.0
+            sample_rate = 24000
+
+            for chunk in chunks:
+                result = engine.synthesize_multi(
+                    segments=chunk,
+                    voice_map=voice_map,
+                    format=format,
+                )
+                if not result.success:
+                    return RenderResult(
+                        success=False,
+                        error=result.error,
+                        engine_used=engine.name,
+                    )
+
+                sample_rate = result.sample_rate or sample_rate
+                total_duration += result.duration_seconds
+
+                if result.segments:
+                    all_segments.extend(result.segments)
+                elif result.audio_data:
+                    all_segments.append(
+                        SynthesisSegment(
+                            speaker="chunk",
+                            text="",
+                            audio_data=result.audio_data,
+                            duration_seconds=result.duration_seconds,
+                            sample_rate=sample_rate,
+                        )
+                    )
+
+            result = SynthesisResult(
+                success=True,
+                audio_data=None,
+                duration_seconds=total_duration,
+                format="wav",
+                sample_rate=sample_rate,
+                segments=all_segments,
+            )
+        else:
+            result = engine.synthesize_multi(
+                segments=script_dicts,
+                voice_map=voice_map,
+                format=format,
+            )
         
         if not result.success:
             return RenderResult(
