@@ -8,6 +8,7 @@ import argparse
 import sys
 import logging
 from pathlib import Path
+import os
 
 # Setup logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -28,6 +29,11 @@ MODELS = {
 def download_dia2():
     print("⏳ Checking Dia2 model cache (nari-labs/Dia2-2B)...")
     try:
+        hf_home = Path(os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")))
+        cache_dir = hf_home / "hub" / "models--nari-labs--Dia2-2B"
+        if cache_dir.exists():
+            print("✅ Dia2 model cache found. Skipping download.")
+            return True
         from huggingface_hub import snapshot_download
         snapshot_download(
             repo_id=MODELS["dia2"]["repo_id"],

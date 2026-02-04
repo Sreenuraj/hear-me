@@ -55,3 +55,6 @@ logs/
 
 # Testing
 .pytest_cache/
+
+# Docs (excluded from repo)
+docs/

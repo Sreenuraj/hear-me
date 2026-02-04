@@ -47,6 +47,7 @@ class PrerequisiteReport:
     ready: bool
     missing: list[str]
     install_command: str | None
+    model_cache: dict[str, bool] = field(default_factory=dict)
     
     def model_dump(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -73,6 +74,7 @@ class PrerequisiteReport:
                 }
                 for name, dep in self.system_deps.items()
             },
+            "model_cache": self.model_cache,
             "ready": self.ready,
             "missing": self.missing,
             "install_command": self.install_command,
@@ -218,6 +220,17 @@ def check_all_prerequisites() -> PrerequisiteReport:
         "ffmpeg": check_command_exists("ffmpeg"),
         "espeak-ng": check_command_exists("espeak-ng"),
     }
+
+    # Model cache presence (best-effort)
+    model_cache = {}
+    try:
+        from pathlib import Path
+        import os
+        hf_home = Path(os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")))
+        model_cache["dia2"] = (hf_home / "hub" / "models--nari-labs--Dia2-2B").exists()
+        model_cache["kokoro"] = (hf_home / "hub" / "models--hexgrad--Kokoro-82M").exists()
+    except Exception:
+        model_cache = {}
     
     # Determine what's missing
     missing = []
@@ -253,6 +266,7 @@ def check_all_prerequisites() -> PrerequisiteReport:
         python_ok=py_ok,
         audio_engines=audio_engines,
         system_deps=system_deps,
+        model_cache=model_cache,
         ready=ready,
         missing=missing,
         install_command=install_cmd,
