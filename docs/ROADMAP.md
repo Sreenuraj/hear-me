@@ -123,6 +123,58 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 
 ---
 
+## Phase 3.5: Enhanced TTS Engines
+
+**Timeline:** Weeks 7-8  
+**Goal:** Add high-quality multi-speaker TTS engines for NotebookLM-like audio
+
+> **Fallback Chain:** VibeVoice → Dia2 → Kokoro → Piper
+
+### TTS Engine Quality Comparison
+
+| Engine | Quality | Multi-Speaker | MacBook Pro | GPU Required |
+|--------|---------|---------------|-------------|--------------|
+| **VibeVoice** | ⭐⭐⭐⭐⭐ | Yes (4+) | ✅ MPS | Optional |
+| **Dia2** | ⭐⭐⭐⭐ | Yes (2) | ✅ CPU/MPS | No |
+| **Kokoro** | ⭐⭐⭐ | No | ✅ CPU | No |
+| **Piper** | ⭐⭐ | No | ✅ CPU | No |
+
+### Tasks
+
+- [ ] **3.5.1 Dia2 Integration (Multi-Speaker)**
+  - [ ] Implement `Dia2Engine` class
+  - [ ] Two-speaker conversational synthesis
+  - [ ] Apple Silicon MPS acceleration
+  - [ ] ~2GB RAM requirement handling
+  - [ ] Voice style configuration
+
+- [ ] **3.5.2 Piper Integration (Lightweight Fallback)**
+  - [ ] Implement `PiperEngine` class
+  - [ ] ONNX-based fast synthesis
+  - [ ] Multiple voice model support
+  - [ ] Ultra-low resource usage
+
+- [ ] **3.5.3 VibeVoice Integration (Premium)**
+  - [ ] Implement `VibeVoiceEngine` class
+  - [ ] 4+ speaker synthesis
+  - [ ] NotebookLM-style conversational audio
+  - [ ] Long-form chunking (90+ minutes)
+  - [ ] GPU acceleration (optional)
+
+- [ ] **3.5.4 Fallback Chain Logic**
+  - [ ] Auto-detect available engines on startup
+  - [ ] Priority-based engine selection
+  - [ ] Graceful degradation (multi → single speaker)
+  - [ ] User override via config
+
+### Deliverables
+- Dia2 produces NotebookLM-like two-host conversations
+- Piper provides fast fallback for resource-constrained systems
+- VibeVoice available for premium quality when GPU present
+- All engines work on MacBook Pro (M1/M2/M3)
+
+---
+
 ## Phase 4: Installation & UX
 
 **Timeline:** Week 8  
@@ -208,6 +260,7 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 | Phase 1: Foundation | ✅ Complete | 100% |
 | Phase 2: Document Pipeline | ✅ Complete | 100% |
 | Phase 3: Audio Generation | ✅ Complete | 100% |
+| Phase 3.5: Enhanced TTS Engines | 🔲 Not Started | 0% |
 | Phase 4: Installation & UX | 🔲 Not Started | 0% |
 | Phase 5: Polish & Release | 🔲 Not Started | 0% |
 
