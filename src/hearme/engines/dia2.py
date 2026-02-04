@@ -13,6 +13,11 @@ For Apple Silicon (M1/M2/M3), Dia2 uses MPS acceleration automatically.
 from __future__ import annotations
 
 import logging
+import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import Any
 
 from hearme.engines.base import (
@@ -39,6 +44,8 @@ class Dia2Engine(BaseEngine):
         self._gen_config = None
         self._available = None
         self._loaded = False
+        self._use_cli = False
+        self._repo_dir: Path | None = None
     
     @property
     def name(self) -> str:
@@ -64,10 +71,37 @@ class Dia2Engine(BaseEngine):
         try:
             import dia2  # noqa: F401
             self._available = True
+            return self._available
         except ImportError:
+            pass
+
+        # Fallback to uv-based repo runtime
+        repo = self._resolve_repo_dir()
+        uv = shutil.which("uv")
+        if repo and uv:
+            self._available = True
+        else:
             self._available = False
         
         return self._available
+
+    def _resolve_repo_dir(self) -> Path | None:
+        env = os.environ.get("HEARME_DIA2_HOME")
+        if env:
+            path = Path(env).expanduser().resolve()
+            if (path / "pyproject.toml").exists():
+                return path
+
+        try:
+            from hearme.config import load_config
+            cfg = load_config()
+            path = Path(cfg.installation.dia2_repo_dir).expanduser().resolve()
+            if (path / "pyproject.toml").exists():
+                return path
+        except Exception:
+            pass
+
+        return None
     
     def load(self) -> None:
         """Load Dia2 model into memory."""
@@ -75,7 +109,7 @@ class Dia2Engine(BaseEngine):
             return
         
         if not self.is_available():
-            raise RuntimeError("Dia2 engine not installed. Run: pip install dia2")
+            raise RuntimeError("Dia2 engine not installed or repo not found.")
         
         try:
             # =========================================================
@@ -98,7 +132,17 @@ class Dia2Engine(BaseEngine):
             import warnings
             warnings.filterwarnings("ignore", message=".*unauthenticated requests.*")
             
-            from dia2 import Dia2, GenerationConfig
+            try:
+                from dia2 import Dia2, GenerationConfig
+                self._use_cli = False
+            except Exception:
+                self._use_cli = True
+                self._repo_dir = self._resolve_repo_dir()
+                if not self._repo_dir:
+                    raise RuntimeError("Dia2 repo not found for uv runtime.")
+                self._loaded = True
+                logger.info("Dia2 CLI runtime ready")
+                return
             import torch
             
             # Detect device (MPS for Apple Silicon, CUDA for NVIDIA, else CPU)
@@ -134,6 +178,8 @@ class Dia2Engine(BaseEngine):
             del self._model
             self._model = None
             self._gen_config = None
+            self._repo_dir = None
+            self._use_cli = False
             
             # Force garbage collection
             gc.collect()
@@ -229,6 +275,46 @@ class Dia2Engine(BaseEngine):
     def _generate(self, script: str) -> SynthesisResult:
         """Generate audio from Dia2 script."""
         try:
+            if self._use_cli:
+                repo = self._repo_dir or self._resolve_repo_dir()
+                if not repo:
+                    return SynthesisResult(success=False, error="Dia2 repo not configured")
+                uv = shutil.which("uv")
+                if not uv:
+                    return SynthesisResult(success=False, error="uv not installed")
+
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    tmpdir_path = Path(tmpdir)
+                    input_path = tmpdir_path / "input.txt"
+                    output_path = tmpdir_path / "output.wav"
+                    input_path.write_text(script, encoding="utf-8")
+
+                    cmd = [
+                        uv, "run", "-m", "dia2.cli",
+                        "--hf", "nari-labs/Dia2-2B",
+                        "--input", str(input_path),
+                        str(output_path),
+                    ]
+                    subprocess.run(cmd, cwd=str(repo), check=True)
+
+                    if not output_path.exists():
+                        return SynthesisResult(success=False, error="Dia2 CLI did not create output")
+
+                    import wave
+                    audio_data = output_path.read_bytes()
+                    with wave.open(str(output_path), "rb") as wav:
+                        frames = wav.getnframes()
+                        sample_rate = wav.getframerate()
+                        duration = frames / float(sample_rate)
+
+                    return SynthesisResult(
+                        success=True,
+                        audio_data=audio_data,
+                        duration_seconds=duration,
+                        format="wav",
+                        sample_rate=sample_rate,
+                    )
+
             import numpy as np
             import io
             import wave

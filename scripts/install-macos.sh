@@ -74,6 +74,16 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 echo -e "${GREEN}✅ macOS detected${NC}"
 
+# Stop any stale hear-me servers before install
+echo ""
+echo -e "${BLUE}🧹 Stopping stale hear-me servers (if any)...${NC}"
+if pgrep -f "python.*-m hearme" >/dev/null 2>&1; then
+    pkill -f "python.*-m hearme" || true
+    echo -e "${GREEN}✅ Stopped existing hear-me server processes${NC}"
+else
+    echo -e "${GREEN}✅ No stale hear-me servers detected${NC}"
+fi
+
 # Check Python
 PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
 REQUIRED="3.10"
@@ -148,6 +158,7 @@ echo ""
 echo -e "${BLUE}📦 Installing system dependencies...${NC}"
 brew install ffmpeg --quiet 2>/dev/null || true
 brew install espeak-ng --quiet 2>/dev/null || true
+brew install uv --quiet 2>/dev/null || true
 echo -e "${GREEN}✅ ffmpeg installed${NC}"
 
 # Create installation directory
@@ -181,17 +192,21 @@ echo ""
 echo -e "${BLUE}🔊 Installing $ENGINE engine...${NC}"
 case $ENGINE in
     dia2)
-        echo -e "${YELLOW}⚠️  Installing Dia2 dependencies (large download)...${NC}"
-        # Install Dia2 directly from upstream to ensure module availability
-        pip install "dia2 @ git+https://github.com/nari-labs/dia2" --upgrade --quiet
-        # Install known runtime deps explicitly (Dia2 repo relies on uv/lockfile)
-        pip install torch transformers huggingface-hub numpy soundfile safetensors scipy librosa inflect protobuf sentencepiece tiktoken --upgrade --quiet
-        # Also install hear-me extras (keeps pyproject deps aligned)
-        pip install -e "$ROOT_DIR[dia2]" --upgrade --quiet
+        echo -e "${YELLOW}⚠️  Installing Dia2 runtime (uv + repo clone)...${NC}"
+        DIA2_DIR="${INSTALL_DIR}/engines/dia2"
+        mkdir -p "$(dirname "$DIA2_DIR")"
+        if [ -d "$DIA2_DIR/.git" ]; then
+            git -C "$DIA2_DIR" pull --rebase --quiet || true
+        else
+            git clone https://github.com/nari-labs/dia2 "$DIA2_DIR"
+        fi
+        echo -e "${YELLOW}⏳ Syncing Dia2 dependencies with uv...${NC}"
+        (cd "$DIA2_DIR" && uv sync)
         
-        # Pre-download model weights
+        # Pre-download model weights via CLI (this will also validate runtime)
         echo -e "${YELLOW}⏳ Pre-downloading Dia2-2B model (this may take a while)...${NC}"
-        python3 "$ROOT_DIR/scripts/download_models.py" --engine dia2
+        echo "[S1] Hello. [S2] This is a Dia2 install check." > "$DIA2_DIR/install-check.txt"
+        (cd "$DIA2_DIR" && uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
         
         echo -e "${GREEN}✅ Dia2 installed (multi-speaker)${NC}"
         ;;
@@ -244,6 +259,9 @@ APP_CONFIG=$(cat <<EOF
   "hear-me": {
     "audio": {
       "engine": "${ENGINE}"
+    },
+    "installation": {
+      "dia2_repo_dir": "${INSTALL_DIR}/engines/dia2"
     }
   }
 }
@@ -267,11 +285,8 @@ fi
 # Verify Dia2 importability if selected
 if [ "$ENGINE" = "dia2" ]; then
     echo ""
-    echo -e "${BLUE}🧪 Verifying Dia2 module import...${NC}"
-    python - <<'PY'
-from dia2 import Dia2, GenerationConfig, SamplingConfig
-print("✅ Dia2 import OK")
-PY
+    echo -e "${BLUE}🧪 Verifying Dia2 CLI runtime...${NC}"
+    (cd "${INSTALL_DIR}/engines/dia2" && uv run -m dia2.cli --version) || true
 fi
 
 # Smoke test: render a short sample with the selected engine

@@ -48,6 +48,10 @@ class InstallationConfig(BaseModel):
     """Installation paths."""
     models_dir: str = Field(default="~/.hear-me/models", description="Model storage path")
     venv_path: str = Field(default="~/.hear-me/venv", description="Virtual environment path")
+    dia2_repo_dir: str = Field(
+        default="~/.hear-me/engines/dia2",
+        description="Dia2 repo path for uv-based runtime",
+    )
 
 
 class HearmeConfig(BaseModel):

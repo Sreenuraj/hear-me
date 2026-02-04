@@ -217,6 +217,54 @@ def install_system_deps(plat):
     return True
 
 
+def install_uv(plat):
+    """Ensure uv is installed (required for Dia2 runtime)."""
+    if check_command_exists("uv"):
+        return True
+    if plat.startswith("macos"):
+        if check_command_exists("brew"):
+            subprocess.run(["brew", "install", "uv"], check=False)
+        else:
+            print("❌ Homebrew not found. Install uv and re-run.")
+            return False
+    elif plat == "linux":
+        if check_command_exists("apt-get"):
+            subprocess.run(["sudo", "apt-get", "update"], check=False)
+            subprocess.run(["sudo", "apt-get", "install", "-y", "uv"], check=False)
+        else:
+            print("❌ apt-get not found. Install uv and re-run.")
+            return False
+    else:
+        print("❌ Please install uv manually and re-run.")
+        return False
+
+    return check_command_exists("uv")
+
+
+def install_dia2_repo(install_dir):
+    """Clone and sync Dia2 repo using uv."""
+    repo_dir = (install_dir / "engines" / "dia2").resolve()
+    repo_dir.parent.mkdir(parents=True, exist_ok=True)
+    if (repo_dir / ".git").exists():
+        subprocess.run(["git", "-C", str(repo_dir), "pull", "--rebase"], check=False)
+    else:
+        subprocess.run(["git", "clone", "https://github.com/nari-labs/dia2", str(repo_dir)], check=False)
+
+    print("⏳ Syncing Dia2 dependencies with uv...")
+    subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False)
+
+    # Pre-download via CLI to validate
+    input_path = repo_dir / "install-check.txt"
+    input_path.write_text("[S1] Hello. [S2] This is a Dia2 install check.", encoding="utf-8")
+    subprocess.run(
+        ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
+        cwd=str(repo_dir),
+        check=False,
+    )
+
+    return repo_dir
+
+
 def pip_install(packages, quiet=True):
     """Install packages with pip."""
     if isinstance(packages, str):
@@ -265,21 +313,7 @@ def install_engine(name, root_dir):
     packages = [engine["package"]] + engine.get("requires", [])
 
     if name == "dia2":
-        packages = [
-            "dia2 @ git+https://github.com/nari-labs/dia2",
-            "torch",
-            "transformers",
-            "huggingface-hub",
-            "numpy",
-            "soundfile",
-            "safetensors",
-            "scipy",
-            "librosa",
-            "inflect",
-            "protobuf",
-            "sentencepiece",
-            "tiktoken",
-        ]
+        packages = []
     
     print(f"🔊 Installing {name}...")
     if pip_install(packages):
@@ -320,6 +354,9 @@ def generate_mcp_config(install_dir, engine_name):
         "hear-me": {
             "audio": {
                 "engine": engine_name
+            },
+            "installation": {
+                "dia2_repo_dir": str((install_dir / "engines" / "dia2").resolve())
             }
         }
     }
@@ -430,6 +467,8 @@ def main():
     check_system_requirements(engine_name, install_dir)
     if not install_system_deps(plat):
         sys.exit(1)
+    if engine_name == "dia2" and not install_uv(plat):
+        sys.exit(1)
 
     # Install hear-me
     if not install_hearme(root_dir):
@@ -437,6 +476,8 @@ def main():
     
     # Install engines
     for engine in engines:
+        if engine == "dia2":
+            install_dia2_repo(install_dir)
         install_engine(engine, root_dir)
     
     # Verify
