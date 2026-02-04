@@ -3,7 +3,7 @@ Tests for hear-me document analyzer.
 """
 
 import pytest
-from hear-me.analyzer import (
+from hearme.analyzer import (
     parse_markdown,
     analyze_documents,
     extract_signals,

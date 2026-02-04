@@ -4,7 +4,7 @@ Tests for hear-me audio renderer.
 
 import pytest
 from pathlib import Path
-from hear-me.renderer import (
+from hearme.renderer import (
     parse_script,
     validate_script,
     render_audio,

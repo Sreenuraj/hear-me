@@ -3,13 +3,13 @@ Tests for hear-me audio engines.
 """
 
 import pytest
-from hear-me.engines.base import (
+from hearme.engines.base import (
     EngineCapabilities,
     SynthesisResult,
     VoiceInfo,
 )
-from hear-me.engines.mock import MockEngine
-from hear-me.engines.registry import EngineRegistry, get_engine
+from hearme.engines.mock import MockEngine
+from hearme.engines.registry import EngineRegistry, get_engine
 
 
 class TestEngineCapabilities:

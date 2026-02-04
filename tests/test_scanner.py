@@ -4,7 +4,7 @@ Tests for hear-me workspace scanner.
 
 import pytest
 from pathlib import Path
-from hear-me.scanner import (
+from hearme.scanner import (
     scan_workspace,
     classify_document,
     is_documentation_file,

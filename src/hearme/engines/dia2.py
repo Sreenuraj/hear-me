@@ -4,8 +4,8 @@ hear-me Dia2 Audio Engine
 High-quality multi-speaker conversational TTS using Nari Labs Dia2.
 Produces NotebookLM-like two-host conversations.
 
-Note: Dia2 must be installed separately:
-    pip install dia-tts
+Note: Dia2 must be installed separately (no vendored code):
+    pip install "dia2 @ git+https://github.com/nari-labs/dia2"
 
 For Apple Silicon (M1/M2/M3), Dia2 uses MPS acceleration automatically.
 """
@@ -35,8 +35,8 @@ class Dia2Engine(BaseEngine):
     """
     
     def __init__(self):
-        self._dia = None
         self._model = None
+        self._gen_config = None
         self._available = None
         self._loaded = False
     
@@ -57,13 +57,12 @@ class Dia2Engine(BaseEngine):
         )
     
     def is_available(self) -> bool:
-        """Check if Dia2 is installed (vendored)."""
+        """Check if Dia2 is installed."""
         if self._available is not None:
             return self._available
         
         try:
-            # Check vendored import
-            from hearme.vendor.dia2.engine import Dia2
+            import dia2  # noqa: F401
             self._available = True
         except ImportError:
             self._available = False
@@ -76,7 +75,7 @@ class Dia2Engine(BaseEngine):
             return
         
         if not self.is_available():
-            raise RuntimeError("Dia2 engine code not found in vendor directory.")
+            raise RuntimeError("Dia2 engine not installed. Run: pip install dia2")
         
         try:
             # =========================================================
@@ -99,8 +98,7 @@ class Dia2Engine(BaseEngine):
             import warnings
             warnings.filterwarnings("ignore", message=".*unauthenticated requests.*")
             
-            # Import from vendor
-            from hearme.vendor.dia2.engine import Dia2
+            from dia2 import Dia2, GenerationConfig
             import torch
             
             # Detect device (MPS for Apple Silicon, CUDA for NVIDIA, else CPU)
@@ -114,6 +112,8 @@ class Dia2Engine(BaseEngine):
             logger.info(f"Loading Dia2 model on {device}...")
             # Use official Nari Labs repo
             self._model = Dia2.from_repo("nari-labs/Dia2-2B", device=device)
+            # Default generation + sampling config (tuned for conversational TTS)
+            self._gen_config = GenerationConfig()
             self._loaded = True
             logger.info(f"Dia2 loaded successfully on {device}")
             
@@ -133,6 +133,7 @@ class Dia2Engine(BaseEngine):
             
             del self._model
             self._model = None
+            self._gen_config = None
             
             # Force garbage collection
             gc.collect()
@@ -234,7 +235,12 @@ class Dia2Engine(BaseEngine):
             
             # Generate audio
             # Dia2 generate returns a GenerationResult object
-            result = self._model.generate(script)
+            result = self._model.generate(
+                script,
+                config=self._gen_config,
+                output_wav=None,
+                verbose=False,
+            )
             
             waveform = result.waveform  # Tensor [1, samples]
             sample_rate = result.sample_rate

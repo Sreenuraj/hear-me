@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class AudioConfig(BaseModel):
@@ -61,6 +61,7 @@ class HearmeConfig(BaseModel):
 
 class Config(BaseModel):
     """Top-level config wrapper."""
+    model_config = ConfigDict(populate_by_name=True)
     hearme: HearmeConfig = Field(default_factory=HearmeConfig, alias="hear-me")
 
 

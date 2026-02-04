@@ -5,7 +5,7 @@ Lightweight, CPU-friendly TTS using Kokoro.
 Good quality single-speaker synthesis without GPU requirements.
 
 Note: Kokoro must be installed separately:
-    pip install kokoro>=0.9.0
+    pip install kokoro
 
 For Apple Silicon (M1/M2/M3), Kokoro uses Metal acceleration automatically.
 """
@@ -31,7 +31,7 @@ class KokoroEngine(BaseEngine):
     
     def __init__(self):
         self._kokoro = None
-        self._model = None
+        self._pipeline = None
         self._voices = None
         self._available = None
     
@@ -53,17 +53,15 @@ class KokoroEngine(BaseEngine):
     
     def _ensure_loaded(self) -> bool:
         """Ensure Kokoro is loaded and ready."""
-        if self._model is not None:
+        if self._pipeline is not None:
             return True
         
         try:
-            import kokoro
-            self._kokoro = kokoro
-            
-            # Load default model
+            from kokoro import KPipeline
+            self._kokoro = KPipeline
+
             # Kokoro auto-downloads on first use
-            self._model = kokoro.KModel()
-            
+            self._pipeline = KPipeline(lang_code="a")
             logger.info("Kokoro engine loaded successfully")
             return True
             
@@ -89,12 +87,12 @@ class KokoroEngine(BaseEngine):
     
     def list_voices(self) -> list[VoiceInfo]:
         """List Kokoro voices."""
-        # Kokoro default voices
+        # Common Kokoro voices (may vary by model release)
         return [
-            VoiceInfo(id="af", name="American Female", language="en", gender="female"),
-            VoiceInfo(id="am", name="American Male", language="en", gender="male"),
-            VoiceInfo(id="bf", name="British Female", language="en", gender="female"),
-            VoiceInfo(id="bm", name="British Male", language="en", gender="male"),
+            VoiceInfo(id="af_heart", name="American Female (Heart)", language="en", gender="female"),
+            VoiceInfo(id="am_michael", name="American Male (Michael)", language="en", gender="male"),
+            VoiceInfo(id="bf_emma", name="British Female (Emma)", language="en", gender="female"),
+            VoiceInfo(id="bm_george", name="British Male (George)", language="en", gender="male"),
         ]
     
     def synthesize(
@@ -119,15 +117,20 @@ class KokoroEngine(BaseEngine):
         
         try:
             # Default voice
-            voice = voice or "af"
+            voice = voice or "af_heart"
             
-            # Generate audio
-            audio, sample_rate = self._kokoro.generate(
-                text=text,
-                voice=voice,
-            )
+            # Generate audio with Kokoro pipeline
+            segments = []
+            sample_rate = 24000
+            for _, _, audio in self._pipeline(text, voice=voice):
+                segments.append(audio)
+            
+            if not segments:
+                return SynthesisResult(success=False, error="Kokoro produced no audio")
             
             import numpy as np
+            audio = np.concatenate(segments, axis=0)
+            
             import io
             import wave
             

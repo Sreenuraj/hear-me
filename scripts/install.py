@@ -18,6 +18,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import ctypes
 from pathlib import Path
 
 
@@ -99,6 +100,123 @@ def check_python():
     print(f"✅ Python {version.major}.{version.minor}")
 
 
+def get_ram_gb():
+    """Return total system RAM in GB."""
+    system = platform.system().lower()
+    if system == "darwin":
+        try:
+            out = subprocess.check_output(["sysctl", "-n", "hw.memsize"]).decode().strip()
+            return int(out) / (1024 ** 3)
+        except Exception:
+            return 0
+    if system == "linux":
+        try:
+            with open("/proc/meminfo") as f:
+                for line in f:
+                    if line.startswith("MemTotal:"):
+                        kb = int(line.split()[1])
+                        return kb / (1024 ** 2)
+        except Exception:
+            return 0
+    if system == "windows":
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+        stat = MEMORYSTATUSEX()
+        stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+            return stat.ullTotalPhys / (1024 ** 3)
+    return 0
+
+
+def get_free_disk_gb(path):
+    """Return free disk space in GB for a path."""
+    try:
+        usage = shutil.disk_usage(path)
+        return usage.free / (1024 ** 3)
+    except Exception:
+        return 0
+
+
+def check_system_requirements(engine, install_dir):
+    """Check RAM and disk requirements for chosen engine."""
+    min_ram_gb = 4
+    min_disk_gb = 2
+    if engine == "dia2":
+        min_ram_gb = 16
+        min_disk_gb = 8
+    elif engine == "piper":
+        min_ram_gb = 2
+        min_disk_gb = 1
+
+    ram_gb = get_ram_gb()
+    disk_gb = get_free_disk_gb(install_dir)
+
+    print(f"🧠 System check: RAM {ram_gb:.1f}GB, Free disk {disk_gb:.1f}GB")
+    if ram_gb < min_ram_gb:
+        print(f"❌ Not enough RAM for {engine} (need {min_ram_gb}GB+)")
+        sys.exit(1)
+    if disk_gb < min_disk_gb:
+        print(f"❌ Not enough free disk for {engine} (need {min_disk_gb}GB+)")
+        sys.exit(1)
+
+    if engine == "dia2" and platform.system().lower() == "darwin":
+        if platform.machine().lower() != "arm64":
+            print("⚠️  Dia2 on Intel Macs will run CPU-only and may be very slow.")
+
+
+def check_command_exists(cmd):
+    """Check if a command exists on PATH."""
+    return shutil.which(cmd) is not None
+
+
+def install_system_deps(plat):
+    """Install or verify system dependencies."""
+    deps = ["ffmpeg", "espeak-ng"]
+    missing = [d for d in deps if not check_command_exists(d)]
+    if not missing:
+        print("✅ System dependencies present")
+        return True
+
+    print(f"📦 Missing system dependencies: {', '.join(missing)}")
+    if plat.startswith("macos"):
+        if check_command_exists("brew"):
+            cmd = ["brew", "install"] + missing
+            subprocess.run(cmd, check=False)
+        else:
+            print("❌ Homebrew not found. Install it and re-run.")
+            return False
+    elif plat == "linux":
+        if check_command_exists("apt-get"):
+            cmd = ["sudo", "apt-get", "update"]
+            subprocess.run(cmd, check=False)
+            cmd = ["sudo", "apt-get", "install", "-y"] + missing
+            subprocess.run(cmd, check=False)
+        else:
+            print("❌ apt-get not found. Install dependencies manually.")
+            return False
+    else:
+        print("❌ Please install dependencies manually and re-run.")
+        return False
+
+    still_missing = [d for d in deps if not check_command_exists(d)]
+    if still_missing:
+        print(f"❌ Still missing: {', '.join(still_missing)}")
+        return False
+
+    print("✅ System dependencies installed")
+    return True
+
+
 def pip_install(packages, quiet=True):
     """Install packages with pip."""
     if isinstance(packages, str):
@@ -115,14 +233,11 @@ def pip_install(packages, quiet=True):
         return False
 
 
-def install_hearme():
+def install_hearme(root_dir):
     """Install hear-me core."""
     print("📥 Installing hear-me...")
     
     # Check if running from source repo
-    script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
-    
     if (root_dir / "pyproject.toml").exists():
         print(f"📦 Installing from local source: {root_dir}")
         # Install in editable mode for dev convenience, or normal for users
@@ -140,7 +255,7 @@ def install_hearme():
     return False
 
 
-def install_engine(name):
+def install_engine(name, root_dir):
     """Install a TTS engine."""
     if name not in ENGINES:
         print(f"⚠️  Unknown engine: {name}")
@@ -148,6 +263,23 @@ def install_engine(name):
     
     engine = ENGINES[name]
     packages = [engine["package"]] + engine.get("requires", [])
+
+    if name == "dia2" and not (root_dir / "pyproject.toml").exists():
+        packages = [
+            "dia2 @ git+https://github.com/nari-labs/dia2",
+            "torch",
+            "transformers",
+            "huggingface-hub",
+            "numpy",
+            "soundfile",
+            "safetensors",
+            "scipy",
+            "librosa",
+            "inflect",
+            "protobuf",
+            "sentencepiece",
+            "tiktoken",
+        ]
     
     print(f"🔊 Installing {name}...")
     if pip_install(packages):
@@ -166,7 +298,7 @@ def install_engine(name):
         return False
 
 
-def generate_mcp_config(install_dir=None):
+def generate_mcp_config(install_dir, engine_name):
     """Generate MCP configuration JSON."""
     python_path = sys.executable
     
@@ -195,6 +327,8 @@ def generate_mcp_config(install_dir=None):
     app_config_path.write_text(json.dumps(app_config, indent=2))
     print(f"✅ Default engine set to: {engine_name}")
 
+    return json.dumps(config, indent=2)
+
 
 def verify_installation():
     """Verify hear-me is working."""
@@ -216,6 +350,26 @@ def verify_installation():
     except Exception as e:
         print(f"⚠️  Verification failed: {e}")
         return False
+
+
+def smoke_test(engine_name, output_path):
+    """Render a short audio sample using the chosen engine."""
+    print()
+    print(f"🧪 Rendering a short audio sample with {engine_name}...")
+    script = [
+        {"speaker": "narrator", "text": "Install check. The hear-me engine is working."},
+        {"speaker": "peer", "text": "Audio synthesis completed successfully."},
+    ]
+    try:
+        from hearme.renderer import render_audio
+        result = render_audio(script=script, output_path=output_path, engine_name=engine_name)
+        if not result.success:
+            print(f"❌ Smoke test failed: {result.error}")
+            sys.exit(1)
+        print(f"✅ Audio sample created: {result.output_path}")
+    except Exception as e:
+        print(f"❌ Smoke test failed: {e}")
+        sys.exit(1)
 
 
 def interactive_mode():
@@ -267,16 +421,28 @@ def main():
         profile = PROFILES[profile_name]
         engines = profile["engines"]
     
+    install_dir = Path(os.environ.get("HEARME_INSTALL_DIR", str(Path.home() / ".hear-me"))).resolve()
+    install_dir.mkdir(parents=True, exist_ok=True)
+    root_dir = Path(__file__).parent.resolve().parent
+    engine_name = engines[0] if engines else "mock"
+
+    # System checks
+    check_system_requirements(engine_name, install_dir)
+    if not install_system_deps(plat):
+        sys.exit(1)
+
     # Install hear-me
-    if not install_hearme():
+    if not install_hearme(root_dir):
         sys.exit(1)
     
     # Install engines
     for engine in engines:
-        install_engine(engine)
+        install_engine(engine, root_dir)
     
     # Verify
     verify_installation()
+    if engines:
+        smoke_test(engine_name, str(install_dir / "install-test.wav"))
     
     # Generate and display MCP config
     print()
@@ -286,7 +452,7 @@ def main():
     print()
     print("Add this to your MCP client config:")
     print()
-    print(generate_mcp_config())
+    print(generate_mcp_config(install_dir, engine_name))
     print()
 
 

@@ -92,7 +92,7 @@ class TestPrerequisiteReport:
         """All expected audio engines should be checked."""
         report = check_all_prerequisites()
         
-        expected_engines = ["vibevoice", "dia2", "chattts", "kokoro", "piper", "xtts"]
+        expected_engines = ["dia2", "kokoro", "piper"]
         for engine in expected_engines:
             assert engine in report.audio_engines
     

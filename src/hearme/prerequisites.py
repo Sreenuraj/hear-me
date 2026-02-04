@@ -145,12 +145,9 @@ def check_command_exists(cmd: str) -> DependencyStatus:
 def _get_engine_deps(engine: str) -> list[str]:
     """Get required dependencies for an engine."""
     deps = {
-        "vibevoice": ["torch", "transformers", "vibevoice"],
-        "dia2": ["torch", "soundfile", "dia"],
-        "chattts": ["torch", "ChatTTS"],
-        "kokoro": ["onnxruntime", "kokoro"],
+        "dia2": ["torch", "transformers", "dia2"],
+        "kokoro": ["kokoro"],
         "piper": ["piper-tts"],
-        "xtts": ["torch", "TTS"],
     }
     return deps.get(engine.lower(), [])
 
@@ -158,12 +155,9 @@ def _get_engine_deps(engine: str) -> list[str]:
 def _get_install_command(engine: str) -> str | None:
     """Get install command for an engine."""
     commands = {
-        "vibevoice": "pip install vibevoice",
-        "dia2": "pip install dia-tts",
-        "chattts": "pip install ChatTTS",
-        "kokoro": "pip install kokoro-onnx",
+        "dia2": "pip install \"dia2 @ git+https://github.com/nari-labs/dia2\"",
+        "kokoro": "pip install kokoro",
         "piper": "pip install piper-tts",
-        "xtts": "pip install TTS",
     }
     return commands.get(engine.lower())
 
@@ -216,7 +210,7 @@ def check_all_prerequisites() -> PrerequisiteReport:
     py_version, py_ok = check_python_version()
     
     # Check all audio engines
-    engines = ["vibevoice", "dia2", "chattts", "kokoro", "piper", "xtts"]
+    engines = ["dia2", "kokoro", "piper"]
     audio_engines = {name: check_audio_engine(name) for name in engines}
     
     # Check system dependencies
@@ -246,11 +240,11 @@ def check_all_prerequisites() -> PrerequisiteReport:
     install_cmd = None
     if not ready:
         if plat == "darwin":
-            install_cmd = "brew install ffmpeg && pip install kokoro-onnx"
+            install_cmd = "brew install ffmpeg && pip install kokoro"
         elif plat == "linux":
-            install_cmd = "apt install ffmpeg && pip install kokoro-onnx"
+            install_cmd = "apt install ffmpeg && pip install kokoro"
         else:
-            install_cmd = "pip install kokoro-onnx"
+            install_cmd = "pip install kokoro"
     
     return PrerequisiteReport(
         platform=plat,

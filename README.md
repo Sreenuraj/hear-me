@@ -58,6 +58,7 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 ./scripts/install-macos.sh --engine dia2
 ```
 *Installs hear-me with Dia2 engine (high quality, multi-speaker) using Apple Silicon acceleration.*
+*The installer verifies system requirements, installs dependencies, downloads models, and runs a smoke test.*
 
 **Cross-Platform (Linux/Windows):**
 ```bash
@@ -96,6 +97,8 @@ hear-me includes several engines to balance quality vs. performance.
 | **Mock** (Dev) | 🌑 | ✅ Yes | 0MB | Silent placeholder for testing |
 
 *Note: VibeVoice engine support coming soon.*
+
+**No vendored code:** all engines are installed from their upstream projects at install time.
 
 ## ⚙️ Configuration
 hear-me automatically degrades gracefully. If Dia2 fails (e.g., out of memory), it falls back to Kokoro, then Piper.

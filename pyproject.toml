@@ -37,10 +37,11 @@ dev = [
 ]
 
 dia2 = [
+    "dia2 @ git+https://github.com/nari-labs/dia2",
     "torch>=2.1.0",           # MPS/CPU support
     "numpy<3.0,>=2.1.0",
-    "transformers>=4.35.3",   # Bumped for dia2
-    "safetensors>=0.5.3",     # Bumped for dia2
+    "transformers>=4.35.3",
+    "safetensors>=0.5.3",
     "huggingface-hub>=0.24.7",
     "soundfile>=0.12.1",
     "scipy>=1.10.0",
@@ -48,10 +49,7 @@ dia2 = [
     "inflect>=7.0.0",
     "protobuf>=4.25.0",
     "sentencepiece>=0.2.0",
-    "tiktoken>=0.1.0",        # Required for tokenizer fallback
-    # Specific dia dependencies
-    "sphn>=0.2.0",
-    "whisper-timestamped>=1.14.2",
+    "tiktoken>=0.1.0",
 ]
 
 [project.scripts]

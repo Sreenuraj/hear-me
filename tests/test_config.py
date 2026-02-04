@@ -6,8 +6,8 @@ import json
 import pytest
 from pathlib import Path
 
-from hear-me.config import (
-    hear-meConfig,
+from hearme.config import (
+    HearmeConfig,
     AudioConfig,
     PrivacyConfig,
     load_config,
@@ -20,22 +20,22 @@ class TestDefaultConfig:
     
     def test_default_audio_engine(self):
         """Default engine should be kokoro (lightweight fallback)."""
-        config = hear-meConfig()
+        config = HearmeConfig()
         assert config.audio.engine == "kokoro"
     
     def test_default_privacy_is_local(self):
         """Privacy should be local-first by default."""
-        config = hear-meConfig()
+        config = HearmeConfig()
         assert config.privacy.allow_network is False
     
     def test_default_format(self):
         """Default audio format should be mp3."""
-        config = hear-meConfig()
+        config = HearmeConfig()
         assert config.audio.format == "mp3"
     
     def test_default_length(self):
         """Default length should be balanced."""
-        config = hear-meConfig()
+        config = HearmeConfig()
         assert config.defaults.length == "balanced"
 
 
@@ -44,7 +44,7 @@ class TestConfigSerialization:
     
     def test_config_to_dict(self):
         """Config should serialize to dict."""
-        config = hear-meConfig()
+        config = HearmeConfig()
         data = config.model_dump()
         
         assert isinstance(data, dict)
@@ -54,8 +54,8 @@ class TestConfigSerialization:
     
     def test_config_roundtrip(self, tmp_path):
         """Config should roundtrip through save/load."""
-        config = hear-meConfig(
-            audio=AudioConfig(engine="vibevoice"),
+        config = HearmeConfig(
+            audio=AudioConfig(engine="kokoro"),
             privacy=PrivacyConfig(allow_network=True)
         )
         
@@ -68,8 +68,10 @@ class TestConfigSerialization:
         with open(config_path) as f:
             data = json.load(f)
         
-        assert data["hear-me"]["audio"]["engine"] == "vibevoice"
-        assert data["hear-me"]["privacy"]["allow_network"] is True
+        wrapper = data.get("hear-me") or data.get("hearme")
+        assert wrapper is not None
+        assert wrapper["audio"]["engine"] == "kokoro"
+        assert wrapper["privacy"]["allow_network"] is True
 
 
 class TestConfigValidation:
@@ -82,6 +84,6 @@ class TestConfigValidation:
     
     def test_invalid_length_rejected(self):
         """Invalid length value should be rejected."""
-        from hear-me.config import DefaultsConfig
+        from hearme.config import DefaultsConfig
         with pytest.raises(Exception):
             DefaultsConfig(length="invalid")

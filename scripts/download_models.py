@@ -16,17 +16,9 @@ logger = logging.getLogger(__name__)
 MODELS = {
     "dia2": {
         "repo_id": "nari-labs/Dia2-2B",
-        "filenames": [
-            "config.json", 
-            "model.safetensors", 
-            "dia2_assets.json",
-            "tokenizer.json",         # Likely present or needed if tokenizer loading logic changes
-            "tokenizer_config.json"
-        ]
     },
     "kokoro": {
         "repo_id": "hexgrad/Kokoro-82M",
-        "filenames": ["kokoro-v0_19.onnx", "voices.json"]
     },
     "piper": {
         "voice": "en_US-amy-medium"
@@ -54,10 +46,10 @@ def download_dia2():
 def download_kokoro():
     print("⏳ Checking Kokoro model cache...")
     try:
-        import kokoro
+        from kokoro import KPipeline
         print("   Triggering Kokoro model download (if missing)...")
-        # Initialize KModel to trigger download of kokoro-v0_19.onnx and voices.json
-        kokoro.KModel() 
+        # Initialize pipeline to trigger download of model and voices
+        KPipeline(lang_code="a")
         print("✅ Kokoro model ready.")
         return True
     except ImportError:
@@ -96,7 +88,12 @@ def download_piper():
 
 def main():
     parser = argparse.ArgumentParser(description="Download hear-me models")
-    parser.add_argument("--engine", required=True, choices=["dia2", "kokoro", "piper"], help="Engine to download models for")
+    parser.add_argument(
+        "--engine",
+        required=True,
+        choices=["dia2", "kokoro", "piper"],
+        help="Engine to download models for",
+    )
     args = parser.parse_args()
 
     success = True

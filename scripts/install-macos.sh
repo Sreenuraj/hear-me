@@ -44,7 +44,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --dir PATH         Installation directory (default: ~/.hear-me)"
             echo ""
             echo "Engines:"
-            echo "  dia2     NotebookLM-like multi-speaker (requires ~2GB RAM)"
+            echo "  dia2     NotebookLM-like multi-speaker (requires high RAM + disk)"
             echo "  kokoro   Good quality single-speaker (default)"
             echo "  piper    Fast, lightweight (low resources)"
             echo ""
@@ -85,6 +85,57 @@ if [ "$(printf '%s\n' "$REQUIRED" "$PYTHON_VERSION" | sort -V | head -n1)" != "$
 fi
 echo -e "${GREEN}✅ Python $PYTHON_VERSION${NC}"
 
+# Helper: get RAM in GB
+get_ram_gb() {
+    local bytes
+    bytes=$(sysctl -n hw.memsize)
+    echo $((bytes / 1024 / 1024 / 1024))
+}
+
+# Helper: get free disk in GB for target directory
+get_free_disk_gb() {
+    local target="$1"
+    local kb
+    kb=$(df -k "$target" | tail -1 | awk '{print $4}')
+    echo $((kb / 1024 / 1024))
+}
+
+# Engine requirements (minimums)
+MIN_RAM_GB=4
+MIN_DISK_GB=2
+case "$ENGINE" in
+    dia2)
+        MIN_RAM_GB=16
+        MIN_DISK_GB=8
+        ;;
+    kokoro)
+        MIN_RAM_GB=4
+        MIN_DISK_GB=2
+        ;;
+    piper)
+        MIN_RAM_GB=2
+        MIN_DISK_GB=1
+        ;;
+esac
+
+RAM_GB=$(get_ram_gb)
+DISK_GB=$(get_free_disk_gb "$(dirname "$INSTALL_DIR")")
+
+echo -e "${BLUE}🧠 System check:${NC} RAM ${RAM_GB}GB, Free disk ${DISK_GB}GB"
+if [ "$RAM_GB" -lt "$MIN_RAM_GB" ]; then
+    echo -e "${RED}❌ Not enough RAM for ${ENGINE} (need ${MIN_RAM_GB}GB+)${NC}"
+    exit 1
+fi
+if [ "$DISK_GB" -lt "$MIN_DISK_GB" ]; then
+    echo -e "${RED}❌ Not enough free disk for ${ENGINE} (need ${MIN_DISK_GB}GB+)${NC}"
+    exit 1
+fi
+
+# Warn on Intel Macs for heavy models
+if [[ "$ENGINE" == "dia2" ]] && [[ "$(uname -m)" != "arm64" ]]; then
+    echo -e "${YELLOW}⚠️  Dia2 on Intel Macs will run CPU-only and may be very slow.${NC}"
+fi
+
 # Check Homebrew
 if ! command -v brew &> /dev/null; then
     echo -e "${YELLOW}⚠️  Homebrew not found. Installing...${NC}"
@@ -96,6 +147,7 @@ echo -e "${GREEN}✅ Homebrew available${NC}"
 echo ""
 echo -e "${BLUE}📦 Installing system dependencies...${NC}"
 brew install ffmpeg --quiet 2>/dev/null || true
+brew install espeak-ng --quiet 2>/dev/null || true
 echo -e "${GREEN}✅ ffmpeg installed${NC}"
 
 # Create installation directory
@@ -111,15 +163,13 @@ fi
 source venv/bin/activate
 
 # Install hear-me
-# Install hear-me
 echo -e "${BLUE}📥 Installing hear-me...${NC}"
 pip install --upgrade pip --quiet
 
 if [ -f "$ROOT_DIR/pyproject.toml" ]; then
     echo -e "${BLUE}📦 Installing from local source: $ROOT_DIR${NC}"
     pip install -e "$ROOT_DIR" --quiet
-    # Also install dev dependencies for local dev
-    pip install -e "$ROOT_DIR[dev]" --quiet
+    # Optional: install with local extras handled per-engine below
 else
     # Fallback to PyPI (once published) or error
     echo -e "${YELLOW}⚠️  Installing from PyPI (if available)...${NC}"
@@ -131,9 +181,7 @@ echo ""
 echo -e "${BLUE}🔊 Installing $ENGINE engine...${NC}"
 case $ENGINE in
     dia2)
-        # Dia2 (vendored)
         echo -e "${YELLOW}⚠️  Installing Dia2 dependencies (large download)...${NC}"
-        # Install with [dia2] extra, forcing upgrade to match requirements
         pip install -e "$ROOT_DIR[dia2]" --upgrade --quiet
         
         # Pre-download model weights
@@ -161,7 +209,8 @@ case $ENGINE in
         echo -e "${GREEN}✅ Piper installed${NC}"
         ;;
     *)
-        echo -e "${YELLOW}⚠️  Unknown engine: $ENGINE, using mock${NC}"
+        echo -e "${RED}❌ Unknown engine: $ENGINE${NC}"
+        exit 1
         ;;
 esac
 
@@ -209,6 +258,26 @@ else
     echo -e "${RED}❌ System checks failed. See errors above.${NC}"
     exit 1
 fi
+
+# Smoke test: render a short sample with the selected engine
+echo ""
+echo -e "${BLUE}🧪 Rendering a short audio sample with ${ENGINE}...${NC}"
+HEARME_ENGINE="$ENGINE" HEARME_OUT="$INSTALL_DIR/install-test.wav" python - <<'PY'
+import os
+from hearme.renderer import render_audio
+
+engine = os.environ.get("HEARME_ENGINE")
+output = os.environ.get("HEARME_OUT")
+script = [
+    {"speaker": "narrator", "text": "Install check. The hear-me engine is working."},
+    {"speaker": "peer", "text": "Audio synthesis completed successfully."},
+]
+result = render_audio(script=script, output_path=output, engine_name=engine)
+if not result.success:
+    raise SystemExit(result.error or "Render failed")
+print("✅ Audio sample created:", result.output_path)
+PY
+
 echo -e "${GREEN}✅ hear-me ready!${NC}"
 
 # Print next steps
