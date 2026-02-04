@@ -216,13 +216,20 @@ def render_audio(
         else:
             audio_data = result.audio_data or b""
         
-        # Ensure output directory exists
+        # Ensure output directory exists (fallback to user home if not writable)
         output_file = Path(output_path)
-        output_file.parent.mkdir(parents=True, exist_ok=True)
+        if not output_file.is_absolute():
+            output_file = Path.cwd() / output_file
+        try:
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            fallback_dir = Path.home() / ".hear-me"
+            fallback_dir.mkdir(parents=True, exist_ok=True)
+            output_file = fallback_dir / output_file.name
         
         # Write output file
         output_file.write_bytes(audio_data)
-        logger.info(f"Audio saved to {output_path}")
+        logger.info(f"Audio saved to {output_file}")
         
         return RenderResult(
             success=True,

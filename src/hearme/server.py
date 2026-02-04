@@ -217,8 +217,16 @@ async def render_audio(
     from hearme.output import persist_outputs, get_output_path
     
     # Resolve output path
+    if root == ".":
+        root = os.getcwd()
     if output_path == ".hear-me/hear-me.audio.wav":
         output_path = get_output_path(root)
+    else:
+        # If relative, resolve against root
+        from pathlib import Path
+        path = Path(output_path)
+        if not path.is_absolute():
+            output_path = str(Path(root) / path)
     
     # Render audio
     result = do_render(
@@ -233,12 +241,20 @@ async def render_audio(
     
     # Persist outputs if requested
     if persist:
+        # If output is inside a .hear-me folder, persist next to it
+        from pathlib import Path
+        output_parent = Path(output_path).parent
+        if output_parent.name == ".hear-me":
+            persist_root = str(output_parent.parent)
+        else:
+            persist_root = root
+
         persist_result = persist_outputs(
             audio_path=result.output_path,
             script=script,
             duration_seconds=result.duration_seconds,
             engine_used=result.engine_used,
-            root=root,
+            root=persist_root,
         )
         return {
             **result.model_dump(),
