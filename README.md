@@ -53,98 +53,56 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 
 ### Installation
 
+**MacBook Pro Users (Recommended):**
 ```bash
-# macOS
-./scripts/install-macos.sh --engine vibevoice
+./scripts/install-macos.sh --engine dia2
+```
+*Installs HEARME with Dia2 engine (high quality, multi-speaker) using Apple Silicon acceleration.*
 
-# Linux
-./scripts/install-linux.sh --engine vibevoice
-
-# Cross-platform
-pip install hearme-mcp && hearme-install --engine vibevoice
+**Cross-Platform (Linux/Windows):**
+```bash
+python scripts/install.py --profile recommended
 ```
 
 ### Add to Your Agent
-
-After installation, add the generated config to your MCP settings:
+After installation, paste the generated JSON config into your MCP settings (e.g., `~/Library/Application Support/Code/.../cline_mcp_settings.json` or similar).
 
 ```json
 {
   "mcpServers": {
     "hearme": {
-      "command": "python",
-      "args": ["~/.hearme/server.py"],
-      "env": {
-        "HEARME_ENGINE": "vibevoice"
-      }
+      "command": "/Users/you/.hearme/venv/bin/python",
+      "args": ["-m", "hearme"]
     }
   }
 }
 ```
 
-### Generate Audio
+### Usage
+Ask your agent:
+> "Create a 2-person podcast about this project's architecture"
 
-Once configured, your agent can:
-
-```
-"Generate an audio overview of this project"
-"Create a podcast-style discussion about the architecture"
-"Explain the codebase in a casual conversation"
-```
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Your AI Agent                         │
-│            (PostQode, Copilot, Cline, etc.)            │
-└─────────────────────────┬───────────────────────────────┘
-                          │ MCP Protocol
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                     HEARME MCP                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │
-│  │  Document   │  │   Audio     │  │   Prerequisite  │ │
-│  │  Pipeline   │  │   Engine    │  │   Detection     │ │
-│  └─────────────┘  └─────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Responsibility Split
-
-| Layer | Handles |
-|-------|---------|
-| **Agent/LLM** | Meaning, narration, personality, tone, structure |
-| **HEARME MCP** | File discovery, audio rendering, persistence |
-| **Audio Engine** | Speech synthesis (VibeVoice, Kokoro, etc.) |
+---
 
 ## 🔊 Audio Engines
 
-| Engine | Multi-Speaker | Quality | Size | GPU |
-|--------|--------------|---------|------|-----|
-| **VibeVoice** | ✅ Up to 4 | ⭐⭐⭐⭐⭐ | 3GB | Recommended |
-| **Dia2** | ✅ + nonverbal | ⭐⭐⭐⭐⭐ | 2GB | Recommended |
-| **ChatTTS** | ✅ | ⭐⭐⭐⭐ | 1.5GB | Optional |
-| **Kokoro** | ❌ | ⭐⭐⭐⭐ | 300MB | No |
-| **Piper** | ❌ | ⭐⭐⭐ | 100MB | No |
+HEARME includes several engines to balance quality vs. performance.
+
+| Engine | Quality | Multi-Speaker | Size | Features |
+|--------|---------|---------------|------|----------|
+| **Dia2** (Best) | ⭐⭐⭐⭐⭐ | ✅ Yes (2 Hosts) | ~2GB | NotebookLM-like, Non-verbal cues, MPS/GPU |
+| **Kokoro** (Good) | ⭐⭐⭐⭐ | ❌ No | ~300MB | High quality single-voice, very fast |
+| **Piper** (Fast) | ⭐⭐ | ❌ No | ~50MB | Ultra-lightweight, works on anything |
+| **Mock** (Dev) | 🌑 | ✅ Yes | 0MB | Silent placeholder for testing |
+
+*Note: VibeVoice engine support coming soon.*
 
 ## ⚙️ Configuration
+HEARME automatically degrades gracefully. If Dia2 fails (e.g., out of memory), it falls back to Kokoro, then Piper.
 
-```json
-{
-  "hearme": {
-    "audio": {
-      "engine": "vibevoice",
-      "fallback_engine": "kokoro",
-      "voices": "auto",
-      "format": "mp3"
-    },
-    "privacy": {
-      "allow_network": false
-    }
-  }
-}
-```
+You can force a specific engine in your agent prompt:
+> "Use the 'piper' engine to read this quickly."
+
 
 ## 📚 Documentation
 

@@ -290,6 +290,26 @@ async def resource_status() -> dict:
 
 
 # =============================================================================
+# Tool 9: troubleshoot_hearme (Self-diagnosis)
+# =============================================================================
+
+@mcp.tool()
+async def troubleshoot_hearme() -> dict:
+    """
+    Run self-diagnosis to identify setup issues.
+    
+    Checks:
+    - Python version and environment
+    - Required dependencies (ffmpeg)
+    - Installed engines and their status
+    
+    Use this if you encounter errors or missing engines.
+    """
+    from hearme.troubleshoot import run_diagnostics
+    return run_diagnostics()
+
+
+# =============================================================================
 # Server runner
 # =============================================================================
 
