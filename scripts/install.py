@@ -255,15 +255,20 @@ def install_dia2_repo(install_dir):
     env.pop("VIRTUAL_ENV", None)
     subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
 
-    # Pre-download via CLI to validate
-    input_path = repo_dir / "install-check.txt"
-    input_path.write_text("[S1] Hello. [S2] This is a Dia2 install check.", encoding="utf-8")
-    subprocess.run(
-        ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
-        cwd=str(repo_dir),
-        check=False,
-        env=env,
-    )
+    # Pre-download via CLI to validate (skip if cache already exists)
+    hf_home = Path(os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")))
+    dia2_cache = hf_home / "hub" / "models--nari-labs--Dia2-2B"
+    if dia2_cache.exists():
+        print("✅ Dia2 model cache found, skipping download")
+    else:
+        input_path = repo_dir / "install-check.txt"
+        input_path.write_text("[S1] Hello. [S2] This is a Dia2 install check.", encoding="utf-8")
+        subprocess.run(
+            ["uv", "run", "-m", "dia2.cli", "--hf", "nari-labs/Dia2-2B", "--input", str(input_path), str(repo_dir / "install-check.wav")],
+            cwd=str(repo_dir),
+            check=False,
+            env=env,
+        )
 
     return repo_dir
 

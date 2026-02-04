@@ -205,9 +205,14 @@ case $ENGINE in
         
         # Pre-download model weights via CLI (this will also validate runtime)
         echo -e "${YELLOW}⏳ Pre-downloading Dia2-2B model (this may take a while)...${NC}"
-        echo "[S1] Hello. [S2] This is a Dia2 install check." > "$DIA2_DIR/install-check.txt"
-        (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
-        DIA2_CLI_OK=1
+        DIA2_CACHE_DIR="${HF_HOME:-$HOME/.cache/huggingface}/hub/models--nari-labs--Dia2-2B"
+        if [ -d "$DIA2_CACHE_DIR" ]; then
+            echo -e "${GREEN}✅ Dia2 model cache found, skipping download${NC}"
+        else
+            echo "[S1] Hello. [S2] This is a Dia2 install check." > "$DIA2_DIR/install-check.txt"
+            (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run -m dia2.cli --hf nari-labs/Dia2-2B --input install-check.txt install-check.wav)
+            DIA2_CLI_OK=1
+        fi
         
         echo -e "${GREEN}✅ Dia2 installed (multi-speaker)${NC}"
         ;;
