@@ -1,6 +1,8 @@
 # HEARME Implementation Roadmap
 
-This document tracks the phased implementation of HEARME MCP. Each phase contains trackable tasks with clear deliverables.
+> **Building the tool that replaces README.md with hearme.mp3**
+
+This document tracks the phased implementation of HEARME MCP – transforming project documentation into natural, conversational audio.
 
 ---
 

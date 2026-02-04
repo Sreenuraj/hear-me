@@ -1,23 +1,30 @@
 # HEARME MCP – Requirements Specification
-Turning documentation into listenable understanding
+
+> **Replace your README.md with a hearme.mp3**
 
 ---
 
 ## 1. Purpose & Vision
 
-**HEARME** is a Model Context Protocol (MCP) implementation that converts project documentation into an **audio experience** optimized for listening.
+**HEARME** is a Model Context Protocol (MCP) that transforms project documentation into natural, conversational audio files.
 
-The goal is not to read documentation aloud, but to help users **understand a project without reading**, by producing:
-- Spoken explanations
-- Conversational walkthroughs
-- Narrative-style introductions
+```
+README.md  →  HEARME MCP  →  hearme.mp3
+```
+
+Instead of asking users to *read* your documentation, let them *listen* to it – podcast-style, with multi-speaker conversations, like Google NotebookLM's Audio Overview.
+
+**The goal is not text-to-speech.** The goal is to produce:
+- Conversational walkthroughs that explain your project
+- Multi-speaker discussions about architecture decisions  
+- Audio overviews users can listen to while commuting or coding
 
 HEARME is designed to be:
-- Agent-driven
-- Local-first
-- Configuration-based
-- LLM-agnostic
-- Extensible
+- **Agent-driven** – Your AI controls tone, personality, structure
+- **Local-first** – All processing on your machine
+- **Privacy-respecting** – No data leaves without consent
+- **LLM-agnostic** – Works with any MCP-compatible agent
+- **Extensible** – Pluggable audio engines
 
 ---
 
