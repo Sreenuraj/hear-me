@@ -208,6 +208,20 @@ case $ENGINE in
         fi
         echo -e "${YELLOW}⏳ Syncing Dia2 dependencies with uv...${NC}"
         (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv sync)
+        echo -e "${YELLOW}🧪 Verifying Dia2 runtime dependencies (torch)...${NC}"
+        if ! (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run python - <<'PY'
+import torch
+print("torch OK", torch.__version__)
+PY
+        ); then
+            echo -e "${YELLOW}⚠️  Dia2 dependency check failed, retrying uv sync...${NC}"
+            (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv sync)
+            (cd "$DIA2_DIR" && env -u VIRTUAL_ENV uv run python - <<'PY'
+import torch
+print("torch OK", torch.__version__)
+PY
+            ) || { echo -e "${RED}❌ Dia2 dependencies not installed (torch missing).${NC}"; exit 1; }
+        fi
         
         # Pre-download model weights via CLI (this will also validate runtime)
         echo -e "${YELLOW}⏳ Pre-downloading Dia2-2B model (this may take a while)...${NC}"

@@ -82,16 +82,40 @@ def verify_engines() -> List[DiagnosticResult]:
                 
                 # Check hardware acceleration if applicable
                 if name == "dia2":
+                    # Verify torch inside Dia2 uv runtime if possible
                     try:
-                        import torch
-                        if torch.backends.mps.is_available():
-                            msg += " (MPS accelerated)"
-                        elif torch.cuda.is_available():
-                            msg += " (CUDA accelerated)"
+                        from pathlib import Path
+                        import os
+                        import subprocess
+                        import shutil
+                        from hearme.config import load_config
+
+                        uv = shutil.which("uv")
+                        repo_dir = None
+                        cfg = load_config()
+                        if cfg.installation.dia2_repo_dir:
+                            repo_dir = Path(cfg.installation.dia2_repo_dir).expanduser().resolve()
+
+                        if uv and repo_dir and (repo_dir / "pyproject.toml").exists():
+                            env = os.environ.copy()
+                            env.pop("VIRTUAL_ENV", None)
+                            check = subprocess.run(
+                                ["uv", "run", "python", "-c", "import torch; print(torch.__version__)"],
+                                cwd=str(repo_dir),
+                                env=env,
+                                check=False,
+                                capture_output=True,
+                                text=True,
+                            )
+                            if check.returncode == 0:
+                                msg += " (torch OK in Dia2 runtime)"
+                            else:
+                                status = "FAIL"
+                                msg = "Engine 'dia2' available but torch missing in Dia2 runtime (run installer)"
                         else:
-                            msg += " (CPU only)"
-                    except Exception:
-                        msg += " (acceleration unknown; torch not in hear-me venv)"
+                            msg += " (Dia2 runtime not verified)"
+                    except Exception as e:
+                        msg += f" (Dia2 runtime check failed: {e})"
             else:
                 status = "WARN"
                 msg = f"Engine '{name}' installed but not available (missing deps?)"

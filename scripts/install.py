@@ -255,6 +255,17 @@ def install_dia2_repo(install_dir):
     env.pop("VIRTUAL_ENV", None)
     subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
 
+    # Verify torch in dia2 runtime, retry sync if needed
+    print("🧪 Verifying Dia2 runtime dependencies (torch)...")
+    check = subprocess.run(["uv", "run", "python", "-c", "import torch; print(torch.__version__)"], cwd=str(repo_dir), check=False, env=env)
+    if check.returncode != 0:
+        print("⚠️  Dia2 dependency check failed, retrying uv sync...")
+        subprocess.run(["uv", "sync"], cwd=str(repo_dir), check=False, env=env)
+        check = subprocess.run(["uv", "run", "python", "-c", "import torch; print(torch.__version__)"], cwd=str(repo_dir), check=False, env=env)
+        if check.returncode != 0:
+            print("❌ Dia2 dependencies not installed (torch missing).")
+            sys.exit(1)
+
     # Pre-download via CLI to validate (skip if cache already exists)
     hf_home = Path(os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")))
     dia2_cache = hf_home / "hub" / "models--nari-labs--Dia2-2B"
