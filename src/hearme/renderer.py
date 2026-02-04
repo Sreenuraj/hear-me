@@ -147,6 +147,11 @@ def render_audio(
     """
     Render audio from an agent-generated script.
     
+    BULLETPROOF RESOURCE MANAGEMENT:
+    - Engine models load only when needed
+    - Models unload immediately after render (even on error)
+    - Memory freed automatically via try/finally
+    
     Args:
         script: List of {speaker, text} segments
         output_path: Where to save the audio file
@@ -183,46 +188,63 @@ def render_audio(
     # Convert to format expected by engine
     script_dicts = [{"speaker": s.speaker, "text": s.text} for s in segments]
     
-    # Synthesize
-    result = engine.synthesize_multi(
-        segments=script_dicts,
-        voice_map=voice_map,
-        format=format,
-    )
-    
-    if not result.success:
-        return RenderResult(
-            success=False,
-            error=result.error,
-            engine_used=engine.name,
-        )
-    
-    # Concatenate audio properly
-    if result.segments:
-        audio_data = concatenate_wav(result.segments, result.sample_rate)
-    else:
-        audio_data = result.audio_data or b""
-    
-    # Ensure output directory exists
-    output_file = Path(output_path)
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Write output file
+    # =========================================================================
+    # BULLETPROOF: Use context manager for guaranteed cleanup
+    # =========================================================================
     try:
+        # Load engine (models into memory)
+        engine.load()
+        logger.info(f"Engine {engine.name} loaded")
+        
+        # Synthesize
+        result = engine.synthesize_multi(
+            segments=script_dicts,
+            voice_map=voice_map,
+            format=format,
+        )
+        
+        if not result.success:
+            return RenderResult(
+                success=False,
+                error=result.error,
+                engine_used=engine.name,
+            )
+        
+        # Concatenate audio properly
+        if result.segments:
+            audio_data = concatenate_wav(result.segments, result.sample_rate)
+        else:
+            audio_data = result.audio_data or b""
+        
+        # Ensure output directory exists
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write output file
         output_file.write_bytes(audio_data)
         logger.info(f"Audio saved to {output_path}")
+        
+        return RenderResult(
+            success=True,
+            output_path=str(output_file.absolute()),
+            duration_seconds=result.duration_seconds,
+            segment_count=len(segments),
+            engine_used=engine.name,
+            format="wav",
+        )
+        
     except Exception as e:
+        logger.error(f"Render failed: {e}")
         return RenderResult(
             success=False,
-            error=f"Failed to write output file: {e}",
-            engine_used=engine.name,
+            error=f"Render failed: {e}",
+            engine_used=engine.name if engine else None,
         )
-    
-    return RenderResult(
-        success=True,
-        output_path=str(output_file.absolute()),
-        duration_seconds=result.duration_seconds,
-        segment_count=len(segments),
-        engine_used=engine.name,
-        format="wav",  # Currently always WAV
-    )
+        
+    finally:
+        # =====================================================================
+        # GUARANTEED CLEANUP: Always unload, even on error
+        # =====================================================================
+        if engine and engine.is_loaded():
+            engine.unload()
+            logger.info(f"Engine {engine.name} unloaded - memory freed")

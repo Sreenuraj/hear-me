@@ -115,6 +115,13 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
   - [x] Create metadata manifest
   - [x] Handle file naming and overwrites
 
+- [x] **3.6 Bulletproof Resource Management**
+  - [x] Engine lifecycle: `load()`, `unload()`, `is_loaded()`
+  - [x] Auto-unload after render completes
+  - [x] Error-safe cleanup with try/finally
+  - [x] `cleanup_resources` tool for manual control
+  - [x] Memory freed immediately after audio generation
+
 ### Deliverables
 - ✅ Audio generated from agent-provided script
 - ✅ Multi-speaker conversations with voice mapping

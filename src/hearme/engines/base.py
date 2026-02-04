@@ -145,6 +145,8 @@ class AudioEngine(Protocol):
 class BaseEngine(ABC):
     """Abstract base class for audio engines."""
     
+    _loaded: bool = False
+    
     @property
     @abstractmethod
     def name(self) -> str:
@@ -166,6 +168,46 @@ class BaseEngine(ABC):
     def list_voices(self) -> list[VoiceInfo]:
         """List available voices."""
         pass
+    
+    # =========================================================================
+    # Lifecycle Methods - BULLETPROOF RESOURCE MANAGEMENT
+    # =========================================================================
+    
+    def is_loaded(self) -> bool:
+        """Check if engine models are currently loaded in memory."""
+        return self._loaded
+    
+    def load(self) -> None:
+        """
+        Load TTS models into memory.
+        
+        Called automatically before synthesis.
+        Override in subclasses to load actual models.
+        """
+        self._loaded = True
+    
+    def unload(self) -> None:
+        """
+        Unload TTS models from memory.
+        
+        Called automatically after synthesis completes.
+        Override in subclasses to properly cleanup resources.
+        """
+        self._loaded = False
+    
+    def __enter__(self):
+        """Context manager support for auto-cleanup."""
+        self.load()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Ensure cleanup on context exit, even on error."""
+        self.unload()
+        return False
+    
+    # =========================================================================
+    # Synthesis Methods
+    # =========================================================================
     
     @abstractmethod
     def synthesize(

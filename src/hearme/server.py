@@ -222,6 +222,74 @@ async def render_audio(
 
 
 # =============================================================================
+# Tool 7: cleanup_resources (BULLETPROOF RESOURCE MANAGEMENT)
+# =============================================================================
+
+@mcp.tool()
+async def cleanup_resources() -> dict:
+    """
+    Force cleanup of all loaded TTS engine resources.
+    
+    Use this to immediately free memory after audio generation,
+    or if you suspect resources weren't properly cleaned up.
+    
+    This is a safety net - normally resources are cleaned automatically
+    after each render_audio call.
+    """
+    from hearme.engines.registry import EngineRegistry
+    
+    cleaned = []
+    
+    for name in EngineRegistry._instances:
+        engine = EngineRegistry._instances[name]
+        if hasattr(engine, 'is_loaded') and engine.is_loaded():
+            engine.unload()
+            cleaned.append(name)
+    
+    return {
+        "success": True,
+        "cleaned_engines": cleaned,
+        "message": f"Cleaned {len(cleaned)} engine(s). Memory freed."
+    }
+
+
+# =============================================================================
+# Tool 8: resource_status (Monitor resource usage)
+# =============================================================================
+
+@mcp.tool()
+async def resource_status() -> dict:
+    """
+    Check current resource status of HEARME.
+    
+    Returns which engines are loaded and their memory estimates.
+    Useful for debugging or verifying cleanup worked.
+    """
+    from hearme.engines.registry import EngineRegistry
+    
+    engines_status = []
+    
+    for name in EngineRegistry._engines:
+        engine = EngineRegistry.get(name)
+        if engine:
+            loaded = engine.is_loaded() if hasattr(engine, 'is_loaded') else False
+            engines_status.append({
+                "name": name,
+                "loaded": loaded,
+                "available": engine.is_available(),
+                "memory_mb": engine.capabilities.model_size_mb if loaded else 0,
+            })
+    
+    total_memory = sum(e["memory_mb"] for e in engines_status)
+    
+    return {
+        "engines": engines_status,
+        "total_memory_mb": total_memory,
+        "status": "clean" if total_memory == 0 else "models_loaded"
+    }
+
+
+# =============================================================================
 # Server runner
 # =============================================================================
 

@@ -98,3 +98,47 @@ class TestEngineRegistry:
         """Requesting unknown engine should return None."""
         engine = get_engine("nonexistent_engine_xyz")
         assert engine is None
+
+
+class TestEngineLifecycle:
+    """Tests for bulletproof resource management."""
+    
+    def test_engine_starts_unloaded(self):
+        """Engine should not be loaded initially."""
+        engine = MockEngine()
+        assert not engine.is_loaded()
+    
+    def test_load_sets_loaded_flag(self):
+        """Load should set the loaded flag."""
+        engine = MockEngine()
+        engine.load()
+        assert engine.is_loaded()
+    
+    def test_unload_clears_loaded_flag(self):
+        """Unload should clear the loaded flag."""
+        engine = MockEngine()
+        engine.load()
+        engine.unload()
+        assert not engine.is_loaded()
+    
+    def test_context_manager_auto_cleanup(self):
+        """Context manager should auto-unload on exit."""
+        engine = MockEngine()
+        
+        with engine:
+            assert engine.is_loaded()
+        
+        assert not engine.is_loaded()
+    
+    def test_context_manager_cleanup_on_error(self):
+        """Context manager should cleanup even on error."""
+        engine = MockEngine()
+        
+        try:
+            with engine:
+                assert engine.is_loaded()
+                raise ValueError("Simulated error")
+        except ValueError:
+            pass
+        
+        assert not engine.is_loaded()
