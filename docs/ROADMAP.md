@@ -47,35 +47,35 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 
 ### Tasks
 
-- [ ] **2.1 Workspace Scanning (`scan_workspace`)**
-  - [ ] Implement directory traversal with gitignore support
-  - [ ] Detect documentation files (README, ARCHITECTURE, /docs/)
-  - [ ] Generate file metadata (size, path, type)
-  - [ ] Handle large repository limits
+- [x] **2.1 Workspace Scanning (`scan_workspace`)**
+  - [x] Implement directory traversal with gitignore support
+  - [x] Detect documentation files (README, ARCHITECTURE, /docs/)
+  - [x] Generate file metadata (size, path, type)
+  - [x] Handle large repository limits
 
-- [ ] **2.2 Document Analysis (`analyze_documents`)**
-  - [ ] Parse Markdown structure (headings, sections)
-  - [ ] Extract document signals (keywords, patterns)
-  - [ ] Classify document type (architecture, contributing, etc.)
-  - [ ] Preserve document boundaries for multi-doc context
+- [x] **2.2 Document Analysis (`analyze_documents`)**
+  - [x] Parse Markdown structure (headings, sections)
+  - [x] Extract document signals (keywords, patterns)
+  - [x] Classify document type (architecture, contributing, etc.)
+  - [x] Preserve document boundaries for multi-doc context
 
-- [ ] **2.3 Audio Context Preparation (`prepare_audio_context`)**
-  - [ ] Transform document structure for spoken narrative
-  - [ ] Remove non-speakable elements (tables, code blocks → descriptions)
-  - [ ] Generate speaker hints for multi-voice scenarios
-  - [ ] Apply length constraints (overview/balanced/thorough)
+- [x] **2.3 Audio Context Preparation (`prepare_audio_context`)**
+  - [x] Transform document structure for spoken narrative
+  - [x] Remove non-speakable elements (tables, code blocks → descriptions)
+  - [x] Generate speaker hints for multi-voice scenarios
+  - [x] Apply length constraints (overview/balanced/thorough)
 
-- [ ] **2.4 Audio Plan Proposal (`propose_audio_plan`)**
-  - [ ] Suggest document ordering and prioritization
-  - [ ] Identify ambiguities for agent resolution
-  - [ ] Propose speaker assignments based on content
-  - [ ] Estimate output duration
+- [x] **2.4 Audio Plan Proposal (`propose_audio_plan`)**
+  - [x] Suggest document ordering and prioritization
+  - [x] Identify ambiguities for agent resolution
+  - [x] Propose speaker assignments based on content
+  - [x] Estimate output duration
 
 ### Deliverables
-- `scan_workspace` returns classified document list
-- `analyze_documents` outputs structured metadata
-- `prepare_audio_context` produces LLM-ready narrative context
-- Full document pipeline testable end-to-end
+- ✅ `scan_workspace` returns classified document list
+- ✅ `analyze_documents` outputs structured metadata
+- ✅ `prepare_audio_context` produces LLM-ready narrative context
+- ✅ Full document pipeline testable end-to-end (40 tests passing)
 
 ---
 
@@ -208,7 +208,7 @@ This document tracks the phased implementation of HEARME MCP – transforming pr
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 100% |
-| Phase 2: Document Pipeline | 🔲 Not Started | 0% |
+| Phase 2: Document Pipeline | ✅ Complete | 100% |
 | Phase 3: Audio Generation | 🔲 Not Started | 0% |
 | Phase 4: Installation & UX | 🔲 Not Started | 0% |
 | Phase 5: Polish & Release | 🔲 Not Started | 0% |

@@ -13,7 +13,11 @@ Main server implementation using FastMCP. Exposes 6 core tools:
 from mcp.server.fastmcp import FastMCP
 
 from hearme.config import load_config
-from hearme.prerequisites import check_all_prerequisites, PrerequisiteReport
+from hearme.prerequisites import check_all_prerequisites
+from hearme.scanner import scan_workspace as do_scan_workspace
+from hearme.analyzer import analyze_documents as do_analyze_documents
+from hearme.context import prepare_audio_context as do_prepare_context
+from hearme.planner import propose_audio_plan as do_propose_plan
 
 # Initialize FastMCP server
 mcp = FastMCP(
@@ -53,17 +57,13 @@ async def scan_workspace(path: str = ".") -> dict:
     Scan workspace for documentation files.
     
     Detects README, ARCHITECTURE, CONTRIBUTING, and other docs.
-    Returns file paths with metadata (size, type, signals).
+    Returns file paths with metadata (size, type, priority).
     
     Args:
         path: Root path to scan (defaults to current directory)
     """
-    # TODO: Implement in Phase 2
-    return {
-        "status": "not_implemented",
-        "message": "scan_workspace will be implemented in Phase 2",
-        "path": path
-    }
+    result = do_scan_workspace(path)
+    return result.model_dump()
 
 
 # =============================================================================
@@ -71,7 +71,7 @@ async def scan_workspace(path: str = ".") -> dict:
 # =============================================================================
 
 @mcp.tool()
-async def analyze_documents(documents: list[str]) -> dict:
+async def analyze_documents(documents: list[str], root: str = ".") -> dict:
     """
     Analyze document structure for audio preparation.
     
@@ -80,13 +80,10 @@ async def analyze_documents(documents: list[str]) -> dict:
     
     Args:
         documents: List of document paths to analyze
+        root: Root directory for resolving paths
     """
-    # TODO: Implement in Phase 2
-    return {
-        "status": "not_implemented",
-        "message": "analyze_documents will be implemented in Phase 2",
-        "documents": documents
-    }
+    result = do_analyze_documents(documents, root)
+    return result.model_dump()
 
 
 # =============================================================================
@@ -97,7 +94,8 @@ async def analyze_documents(documents: list[str]) -> dict:
 async def propose_audio_plan(
     documents: list[str],
     mode: str = "agent-decided",
-    length: str = "balanced"
+    length: str = "balanced",
+    root: str = "."
 ) -> dict:
     """
     Propose an audio generation plan.
@@ -107,17 +105,21 @@ async def propose_audio_plan(
     
     Args:
         documents: Documents to include in the audio
-        mode: Audio mode (explainer, discussion, narrative, etc.)
+        mode: Audio mode (explainer, discussion, narrative, tour, agent-decided)
         length: Depth level (overview, balanced, thorough)
+        root: Root directory for resolving paths
     """
-    # TODO: Implement in Phase 2
-    return {
-        "status": "not_implemented",
-        "message": "propose_audio_plan will be implemented in Phase 2",
-        "documents": documents,
-        "mode": mode,
-        "length": length
-    }
+    # Analyze documents first to get structure
+    analysis = do_analyze_documents(documents, root)
+    
+    # Generate plan
+    plan = do_propose_plan(
+        documents=analysis.documents,
+        structures=analysis.documents,
+        mode=mode,
+        length=length,
+    )
+    return plan.model_dump()
 
 
 # =============================================================================
@@ -127,24 +129,28 @@ async def propose_audio_plan(
 @mcp.tool()
 async def prepare_audio_context(
     documents: list[str],
+    mode: str = "balanced",
+    root: str = ".",
     plan: dict | None = None
 ) -> dict:
     """
     Prepare LLM-ready context for audio narration.
     
     Transforms document content into a format optimized for
-    spoken explanation. Removes non-speakable elements.
+    spoken explanation. Handles non-speakable elements appropriately.
     
     Args:
         documents: Documents to prepare
+        mode: Length mode (overview, balanced, thorough)
+        root: Root directory for resolving paths
         plan: Optional audio plan from propose_audio_plan
     """
-    # TODO: Implement in Phase 2
-    return {
-        "status": "not_implemented",
-        "message": "prepare_audio_context will be implemented in Phase 2",
-        "documents": documents
-    }
+    # Analyze documents first
+    analysis = do_analyze_documents(documents, root)
+    
+    # Prepare context
+    context = do_prepare_context(analysis.documents, mode=mode, plan=plan)
+    return context.model_dump()
 
 
 # =============================================================================
