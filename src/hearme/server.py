@@ -160,8 +160,11 @@ async def prepare_audio_context(
 @mcp.tool()
 async def render_audio(
     script: list[dict],
-    output_path: str = ".hearme/hearme.audio.mp3",
-    voice_map: dict | None = None
+    output_path: str = ".hearme/hearme.audio.wav",
+    voice_map: dict | None = None,
+    engine: str | None = None,
+    persist: bool = True,
+    root: str = "."
 ) -> dict:
     """
     Render audio from an agent-generated script.
@@ -172,7 +175,10 @@ async def render_audio(
     Args:
         script: List of {speaker, text} segments
         output_path: Where to save the audio file
-        voice_map: Optional speaker-to-voice mapping
+        voice_map: Speaker name to voice ID mapping
+        engine: Which engine to use (None for best available)
+        persist: Whether to save script and manifest files
+        root: Project root directory
     
     Example script:
         [
@@ -180,13 +186,39 @@ async def render_audio(
             {"speaker": "peer", "text": "What does it do?"}
         ]
     """
-    # TODO: Implement in Phase 3
-    return {
-        "status": "not_implemented",
-        "message": "render_audio will be implemented in Phase 3",
-        "script_segments": len(script),
-        "output_path": output_path
-    }
+    from hearme.renderer import render_audio as do_render
+    from hearme.output import persist_outputs, get_output_path
+    
+    # Resolve output path
+    if output_path == ".hearme/hearme.audio.wav":
+        output_path = get_output_path(root)
+    
+    # Render audio
+    result = do_render(
+        script=script,
+        output_path=output_path,
+        voice_map=voice_map,
+        engine_name=engine,
+    )
+    
+    if not result.success:
+        return result.model_dump()
+    
+    # Persist outputs if requested
+    if persist:
+        persist_result = persist_outputs(
+            audio_path=result.output_path,
+            script=script,
+            duration_seconds=result.duration_seconds,
+            engine_used=result.engine_used,
+            root=root,
+        )
+        return {
+            **result.model_dump(),
+            **persist_result,
+        }
+    
+    return result.model_dump()
 
 
 # =============================================================================
