@@ -24,6 +24,14 @@ class AudioConfig(BaseModel):
         default=2000,
         description="Chunk size for long renders (prevents timeouts)",
     )
+    max_chunks: int = Field(
+        default=50,
+        description="Maximum chunks to render in one call",
+    )
+    time_budget_seconds: int = Field(
+        default=120,
+        description="Time budget per render_audio call",
+    )
     fast_mode: bool = Field(
         default=True,
         description="Prefer fast single-speaker engine for large scripts",

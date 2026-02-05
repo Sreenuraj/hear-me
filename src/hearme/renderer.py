@@ -11,6 +11,7 @@ import io
 import logging
 import wave
 from dataclasses import dataclass, field
+import time
 from pathlib import Path
 from typing import Literal
 
@@ -39,6 +40,9 @@ class RenderResult:
     engine_used: str | None = None
     format: AudioFormat = "wav"
     error: str | None = None
+    partial: bool = False
+    chunks_total: int = 0
+    chunks_completed: int = 0
     
     def model_dump(self) -> dict:
         return {
@@ -49,6 +53,9 @@ class RenderResult:
             "engine_used": self.engine_used,
             "format": self.format,
             "error": self.error,
+            "partial": self.partial,
+            "chunks_total": self.chunks_total,
+            "chunks_completed": self.chunks_completed,
         }
 
 
@@ -173,6 +180,7 @@ def render_audio(
     voice_map: dict[str, str] | None = None,
     engine_name: str | None = None,
     format: AudioFormat = "wav",
+    resume_from_chunk: int = 0,
 ) -> RenderResult:
     """
     Render audio from an agent-generated script.
@@ -229,6 +237,9 @@ def render_audio(
     # BULLETPROOF: Use context manager for guaranteed cleanup
     # =========================================================================
     try:
+        partial = False
+        total_chunks = 0
+        chunks_completed = 0
         # Load engine (models into memory)
         engine.load()
         logger.info(f"Engine {engine.name} loaded")
@@ -237,13 +248,27 @@ def render_audio(
         if engine.name == "dia2":
             config = load_config()
             max_chars = getattr(config.audio, "max_chars_per_chunk", 2000)
+            max_chunks = getattr(config.audio, "max_chunks", 50)
+            time_budget = getattr(config.audio, "time_budget_seconds", 120)
             chunks = _chunk_segments(script_dicts, max_chars) if total_chars > max_chars else [script_dicts]
+            total_chunks = len(chunks)
 
             all_segments: list[SynthesisSegment] = []
             total_duration = 0.0
             sample_rate = 24000
+            start_time = time.monotonic()
+            chunks_completed = 0
+            partial = False
 
-            for chunk in chunks:
+            for idx, chunk in enumerate(chunks):
+                if idx < resume_from_chunk:
+                    continue
+                if chunks_completed >= max_chunks:
+                    partial = True
+                    break
+                if time.monotonic() - start_time > time_budget:
+                    partial = True
+                    break
                 result = engine.synthesize_multi(
                     segments=chunk,
                     voice_map=voice_map,
@@ -271,6 +296,7 @@ def render_audio(
                             sample_rate=sample_rate,
                         )
                     )
+                chunks_completed += 1
 
             result = SynthesisResult(
                 success=True,
@@ -322,6 +348,10 @@ def render_audio(
             segment_count=len(segments),
             engine_used=engine.name,
             format="wav",
+            partial=partial if engine.name == "dia2" else False,
+            chunks_total=total_chunks if engine.name == "dia2" else 0,
+            chunks_completed=chunks_completed if engine.name == "dia2" else 0,
+            error="time_budget_exceeded" if (engine.name == "dia2" and partial) else None,
         )
         
     except Exception as e:

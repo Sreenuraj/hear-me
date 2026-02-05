@@ -232,6 +232,7 @@ async def render_audio(
     cleanup: bool = True,
     script_path: str | None = None,
     script_json: str | None = None,
+    resume_from_chunk: int = 0,
 ) -> dict:
     """
     Render audio from an agent-generated script.
@@ -251,6 +252,7 @@ async def render_audio(
         persist: Optional. Save script + manifest files (default: true).
         root: Optional. Project root directory (defaults to cwd).
         cleanup: Optional. Cleanup engine resources after render (default: true).
+        resume_from_chunk: Optional. Resume rendering from a chunk index (Dia2 only).
     
     Example script:
         [
@@ -314,6 +316,7 @@ async def render_audio(
         output_path=output_path,
         voice_map=voice_map,
         engine_name=engine,
+        resume_from_chunk=resume_from_chunk,
     )
     
     if not result.success:
