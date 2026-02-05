@@ -55,6 +55,12 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 
 ### Installation
 
+**Default (Fast, Single-Speaker):**
+```bash
+./scripts/install-macos.sh --engine kokoro
+```
+*Recommended for quick, consistent narration.*
+
 **MacBook Pro Users (Recommended):**
 ```bash
 ./scripts/install-macos.sh --engine dia2
