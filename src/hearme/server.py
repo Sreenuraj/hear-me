@@ -217,13 +217,15 @@ async def prepare_audio_context(
 
 @mcp.tool()
 async def render_audio(
-    script: list[dict],
+    script: list[dict] | None = None,
     output_path: str = ".hear-me/hear-me.audio.wav",
     voice_map: dict | None = None,
     engine: str | None = None,
     persist: bool = True,
     root: str = ".",
     cleanup: bool = True,
+    script_path: str | None = None,
+    script_json: str | None = None,
 ) -> dict:
     """
     Render audio from an agent-generated script.
@@ -232,7 +234,9 @@ async def render_audio(
     Supports multi-speaker synthesis with voice mapping.
     
     Args:
-        script: List of {speaker, text} segments
+        script: List of {speaker, text} segments (optional if script_path/json provided)
+        script_path: Path to a JSON file containing the script
+        script_json: JSON string containing the script
         output_path: Where to save the audio file
         voice_map: Speaker name to voice ID mapping
         engine: Which engine to use (None uses configured default)
@@ -249,9 +253,39 @@ async def render_audio(
     from hearme.renderer import render_audio as do_render
     from hearme.output import persist_outputs, get_output_path
     
-    # Resolve output path
+    # Resolve root
     if root == ".":
         root = os.getcwd()
+
+    # Resolve script input
+    if script_path and (script is not None or script_json is not None):
+        return {"success": False, "error": "Provide only one of script, script_path, or script_json."}
+    if script_json and script is not None:
+        return {"success": False, "error": "Provide only one of script, script_path, or script_json."}
+
+    if script_path:
+        from pathlib import Path
+        import json
+        path = Path(script_path)
+        if not path.is_absolute():
+            path = Path(root) / path
+        if not path.exists():
+            return {"success": False, "error": f"script_path not found: {path}"}
+        try:
+            script = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as e:
+            return {"success": False, "error": f"Failed to parse script_path JSON: {e}"}
+    elif script_json:
+        import json
+        try:
+            script = json.loads(script_json)
+        except Exception as e:
+            return {"success": False, "error": f"Failed to parse script_json: {e}"}
+
+    if not script:
+        return {"success": False, "error": "script is required (or provide script_path/script_json)."}
+
+    # Resolve output path
     if output_path == ".hear-me/hear-me.audio.wav":
         output_path = get_output_path(root)
     else:
