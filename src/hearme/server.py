@@ -107,8 +107,8 @@ async def analyze_documents(documents: list[str], root: str = ".") -> dict:
     Does NOT summarize or interpret content.
     
     Args:
-        documents: List of document paths to analyze
-        root: Root directory for resolving paths
+        documents: Required. List of document paths to analyze.
+        root: Optional. Root directory for resolving paths (defaults to cwd).
     
     Note:
         If you already have explicit document paths, you can call this
@@ -151,10 +151,10 @@ async def propose_audio_plan(
     ambiguities that need agent resolution.
     
     Args:
-        documents: Documents to include in the audio
-        mode: Audio mode (explainer, discussion, narrative, tour, agent-decided)
-        length: Depth level (overview, balanced, thorough)
-        root: Root directory for resolving paths
+        documents: Required. Documents to include in the audio.
+        mode: Optional. Audio mode (explainer, discussion, narrative, tour, agent-decided).
+        length: Optional. Depth level (overview, balanced, thorough).
+        root: Optional. Root directory for resolving paths (defaults to cwd).
     
     Note:
         If documents are explicitly provided, you can skip scan_workspace.
@@ -190,10 +190,10 @@ async def prepare_audio_context(
     spoken explanation. Handles non-speakable elements appropriately.
     
     Args:
-        documents: Documents to prepare
-        mode: Length mode (overview, balanced, thorough)
-        root: Root directory for resolving paths
-        plan: Optional audio plan from propose_audio_plan
+        documents: Required. Documents to prepare.
+        mode: Optional. Length mode (overview, balanced, thorough).
+        root: Optional. Root directory for resolving paths (defaults to cwd).
+        plan: Optional audio plan from propose_audio_plan.
     
     Note:
         If documents are explicitly provided, you can skip scan_workspace.
@@ -234,15 +234,16 @@ async def render_audio(
     Supports multi-speaker synthesis with voice mapping.
     
     Args:
-        script: List of {speaker, text} segments (optional if script_path/json provided)
-        script_path: Path to a JSON file containing the script
-        script_json: JSON string containing the script
-        output_path: Where to save the audio file
-        voice_map: Speaker name to voice ID mapping
-        engine: Which engine to use (None uses configured default)
-        persist: Whether to save script and manifest files
-        root: Project root directory
-        cleanup: Whether to cleanup engine resources after render
+        script: Optional. List of {speaker, text} segments (required if script_path/json not provided).
+        script_path: Optional. Path to a JSON file containing the script.
+        script_json: Optional. JSON string containing the script.
+        output_path: Optional. Where to save the audio file. Defaults to `.hear-me/hear-me.audio.wav`
+            resolved against `root`. If unwritable, falls back to `~/.hear-me/`.
+        voice_map: Optional. Speaker name to voice ID mapping.
+        engine: Optional. Engine to use; if None, uses configured default.
+        persist: Optional. Save script + manifest files (default: true).
+        root: Optional. Project root directory (defaults to cwd).
+        cleanup: Optional. Cleanup engine resources after render (default: true).
     
     Example script:
         [
