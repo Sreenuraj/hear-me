@@ -314,7 +314,8 @@ def prepare_document_context(
 def prepare_audio_context(
     documents: list[DocumentStructure],
     mode: LengthMode = "balanced",
-    plan: dict | None = None
+    plan: dict | None = None,
+    engine: str | None = None,
 ) -> PreparedContext:
     """
     Prepare all documents for audio generation.
@@ -330,8 +331,13 @@ def prepare_audio_context(
     contexts: list[AudioContext] = []
     total_words = 0
     
+    # If engine is single-speaker, adjust speaker hints accordingly
+    single_speaker = engine in ("kokoro", "piper")
+
     for doc in documents:
         ctx = prepare_document_context(doc, mode)
+        if single_speaker:
+            ctx.speaker_hints = []
         contexts.append(ctx)
         total_words += ctx.estimated_words
     

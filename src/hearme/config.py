@@ -24,6 +24,10 @@ class AudioConfig(BaseModel):
         default=2000,
         description="Chunk size for long renders (prevents timeouts)",
     )
+    fast_mode: bool = Field(
+        default=True,
+        description="Prefer fast single-speaker engine for large scripts",
+    )
 
 
 class DefaultsConfig(BaseModel):

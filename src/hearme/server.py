@@ -206,8 +206,14 @@ async def prepare_audio_context(
     if mode == "balanced" and analysis.total_words > 3000:
         effective_mode = "overview"
     
-    # Prepare context
-    context = do_prepare_context(analysis.documents, mode=effective_mode, plan=plan)
+    # Prepare context (engine-aware)
+    config = load_config()
+    context = do_prepare_context(
+        analysis.documents,
+        mode=effective_mode,
+        plan=plan,
+        engine=config.audio.engine,
+    )
     return context.model_dump()
 
 
