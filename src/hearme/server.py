@@ -239,7 +239,8 @@ async def render_audio(
         script_json: Optional. JSON string containing the script.
         output_path: Optional. Where to save the audio file. Defaults to `.hear-me/hear-me.audio.wav`
             resolved against `root`. If unwritable, falls back to `~/.hear-me/`.
-        voice_map: Optional. Speaker name to voice ID mapping.
+        voice_map: Optional. Speaker name to voice ID mapping. If engine is single-speaker,
+            all segments are collapsed to a single narrator voice.
         engine: Optional. Engine to use; if None, uses configured default.
         persist: Optional. Save script + manifest files (default: true).
         root: Optional. Project root directory (defaults to cwd).

@@ -218,6 +218,12 @@ def render_audio(
     # Convert to format expected by engine
     script_dicts = [{"speaker": s.speaker, "text": s.text} for s in segments]
     total_chars = sum(len(s["text"]) for s in script_dicts)
+
+    # If engine doesn't support multi-speaker, collapse to single narrator
+    if not engine.capabilities.multi_speaker:
+        script_dicts = [{"speaker": "narrator", "text": s["text"]} for s in script_dicts]
+        if voice_map:
+            voice_map = {"narrator": voice_map.get("narrator")}
     
     # =========================================================================
     # BULLETPROOF: Use context manager for guaranteed cleanup

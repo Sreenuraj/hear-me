@@ -53,6 +53,11 @@ def download_kokoro():
     print("⏳ Checking Kokoro model cache...")
     try:
         from kokoro import KPipeline
+        hf_home = Path(os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")))
+        cache_dir = hf_home / "hub" / "models--hexgrad--Kokoro-82M"
+        if cache_dir.exists():
+            print("✅ Kokoro model cache found. Skipping download.")
+            return True
         print("   Triggering Kokoro model download (if missing)...")
         # Initialize pipeline to trigger download of model and voices
         KPipeline(lang_code="a")
