@@ -255,7 +255,7 @@ async def render_audio(
         script: Optional. List of {speaker, text} segments (required if script_path/json not provided).
         script_path: Optional. Path to a JSON file containing the script.
         script_json: Optional. JSON string containing the script.
-        output_path: Optional. Where to save the audio file. Defaults to `.hear-me/hear-me.audio.wav`
+        output_path: Optional. Where to save the audio file. Defaults to `.hear-me/hear-me.wav`
             resolved against `root`. If unwritable, falls back to `~/.hear-me/`.
         voice_map: Optional. Speaker name to voice ID mapping. If engine is single-speaker,
             all segments are collapsed to a single narrator voice.
@@ -307,7 +307,7 @@ async def render_audio(
         return {"success": False, "error": "script is required (or provide script_path/script_json)."}
 
     # Resolve output path
-    if output_path == ".hear-me/hear-me.audio.wav":
+    if output_path in (".hear-me/hear-me.audio.wav", ".hear-me/hear-me.wav", ".hear-me/hear-me-overview.wav"):
         output_path = get_output_path(root)
     else:
         # If relative, resolve against root
