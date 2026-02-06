@@ -354,12 +354,17 @@ async def render_audio(
             script=script,
             duration_seconds=result.duration_seconds,
             engine_used=result.engine_used,
+            partial=result.partial,
+            chunks_total=result.chunks_total,
+            chunks_completed=result.chunks_completed,
             root=persist_root,
         )
         response = {
             **result.model_dump(),
             **persist_result,
         }
+        if result.partial:
+            response["next_chunk"] = result.chunks_completed
     else:
         response = result.model_dump()
 

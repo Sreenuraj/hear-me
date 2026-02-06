@@ -28,6 +28,9 @@ class OutputManifest:
     engine_used: str | None = None
     segment_count: int = 0
     documents_used: list[str] = field(default_factory=list)
+    partial: bool = False
+    chunks_total: int = 0
+    chunks_completed: int = 0
     
     def model_dump(self) -> dict:
         return {
@@ -39,6 +42,9 @@ class OutputManifest:
             "engine_used": self.engine_used,
             "segment_count": self.segment_count,
             "documents_used": self.documents_used,
+            "partial": self.partial,
+            "chunks_total": self.chunks_total,
+            "chunks_completed": self.chunks_completed,
         }
 
 
@@ -131,6 +137,9 @@ def persist_outputs(
     duration_seconds: float = 0.0,
     engine_used: str | None = None,
     documents_used: list[str] | None = None,
+    partial: bool = False,
+    chunks_total: int = 0,
+    chunks_completed: int = 0,
     root: str = "."
 ) -> dict:
     """
@@ -169,6 +178,9 @@ def persist_outputs(
         engine_used=engine_used,
         segment_count=len(script),
         documents_used=documents_used or [],
+        partial=partial,
+        chunks_total=chunks_total,
+        chunks_completed=chunks_completed,
     )
     
     manifest_path = save_manifest(manifest, root)
