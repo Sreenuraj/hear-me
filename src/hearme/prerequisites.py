@@ -48,6 +48,7 @@ class PrerequisiteReport:
     missing: list[str]
     install_command: str | None
     model_cache: dict[str, bool] = field(default_factory=dict)
+    engine_status: dict[str, str] = field(default_factory=dict)
     
     def model_dump(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -75,6 +76,7 @@ class PrerequisiteReport:
                 for name, dep in self.system_deps.items()
             },
             "model_cache": self.model_cache,
+            "engine_status": self.engine_status,
             "ready": self.ready,
             "missing": self.missing,
             "install_command": self.install_command,
@@ -259,6 +261,17 @@ def check_all_prerequisites() -> PrerequisiteReport:
         else:
             install_cmd = "pip install kokoro"
     
+    # Engine status hints
+    engine_status = {}
+    preferred = None
+    if audio_engines.get("dia2") and audio_engines["dia2"].installed and model_cache.get("dia2"):
+        preferred = "dia2"
+    elif audio_engines.get("kokoro") and audio_engines["kokoro"].installed and model_cache.get("kokoro"):
+        preferred = "kokoro"
+    elif audio_engines.get("piper") and audio_engines["piper"].installed:
+        preferred = "piper"
+    engine_status["preferred_engine"] = preferred or "mock"
+
     return PrerequisiteReport(
         platform=plat,
         platform_name=plat_name,
@@ -267,6 +280,7 @@ def check_all_prerequisites() -> PrerequisiteReport:
         audio_engines=audio_engines,
         system_deps=system_deps,
         model_cache=model_cache,
+        engine_status=engine_status,
         ready=ready,
         missing=missing,
         install_command=install_cmd,
