@@ -137,13 +137,15 @@ class Dia2Engine(BaseEngine):
             use_prefix = bool(cfg.audio.dia2_prefix_speaker_1 or cfg.audio.dia2_prefix_speaker_2)
             force_cli = os.environ.get("HEARME_DIA2_USE_CLI") == "1"
 
+            dia2_imported = False
             try:
-                from dia2 import Dia2, GenerationConfig
+                from dia2 import Dia2, GenerationConfig  # noqa: F401
+                dia2_imported = True
                 self._use_cli = False
             except Exception:
                 self._use_cli = True
 
-            if use_prefix or force_cli:
+            if use_prefix or force_cli or not dia2_imported:
                 self._use_cli = True
                 self._repo_dir = self._resolve_repo_dir()
                 if not self._repo_dir:

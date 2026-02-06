@@ -261,7 +261,7 @@ async def render_audio(
             all segments are collapsed to a single narrator voice.
         engine: Optional. Engine to use; if None, uses configured default.
         persist: Optional. Save script + manifest files (default: true).
-        root: Optional. Project root directory (defaults to cwd).
+        root: Optional. Project root directory (defaults to cwd). If empty or ".", cwd is used.
         cleanup: Optional. Cleanup engine resources after render (default: true).
         resume_from_chunk: Optional. Resume rendering from a chunk index (Dia2 only).
     
@@ -275,7 +275,7 @@ async def render_audio(
     from hearme.output import persist_outputs, get_output_path
     
     # Resolve root
-    if root == ".":
+    if not root or root == ".":
         root = os.getcwd()
 
     # Resolve script input
