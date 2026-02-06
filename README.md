@@ -61,12 +61,12 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 ```
 *Recommended for quick, consistent narration.*
 
-**MacBook Pro Users (Recommended):**
+**Dia2 (Experimental):**
 ```bash
 ./scripts/install-macos.sh --engine dia2
 ```
 *Installs hear-me with Dia2 engine (high quality, multi-speaker) using Apple Silicon acceleration.*
-*The installer verifies system requirements, installs dependencies, downloads models, and runs a smoke test.*
+*Experimental: long renders/timeouts can occur on real codebases. Use only if you’re OK with slow runs.*
 
 **Cross-Platform (Linux/Windows):**
 ```bash
@@ -94,7 +94,7 @@ Ask your agent:
 Tip: If you already know which docs to include, you can skip scanning and pass
 the file list directly to analysis/context generation.
 
-**Default behavior:** hear‑me now prefers a fast single‑speaker path (Kokoro) for speed and consistency. Multi‑speaker Dia2 is available when explicitly requested for higher quality.
+**Default behavior:** hear‑me now prefers a fast single‑speaker path (Kokoro) for speed and consistency. Multi‑speaker Dia2 is available when explicitly requested and is considered experimental.
 
 ---
 
@@ -104,7 +104,7 @@ hear-me includes several engines to balance quality vs. performance.
 
 | Engine | Quality | Multi-Speaker | Size | Features |
 |--------|---------|---------------|------|----------|
-| **Dia2** (Best) | ⭐⭐⭐⭐⭐ | ✅ Yes (2 Hosts) | ~2GB | NotebookLM-like, Non-verbal cues, MPS/GPU |
+| **Dia2** (Experimental) | ⭐⭐⭐⭐⭐ | ✅ Yes (2 Hosts) | ~2GB | NotebookLM-like, Non-verbal cues, MPS/GPU (slow/long renders) |
 | **Kokoro** (Default) | ⭐⭐⭐⭐ | ❌ No | ~300MB | High quality single-voice, very fast |
 | **Piper** (Fast) | ⭐⭐ | ❌ No | ~50MB | Ultra-lightweight, works on anything |
 | **Mock** (Dev) | 🌑 | ✅ Yes | 0MB | Silent placeholder for testing |
