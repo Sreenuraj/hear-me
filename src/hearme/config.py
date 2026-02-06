@@ -36,6 +36,25 @@ class AudioConfig(BaseModel):
         default=True,
         description="Prefer fast single-speaker engine for large scripts",
     )
+    dia2_model: str = Field(
+        default="nari-labs/Dia2-2B",
+        description="Dia2 model repo (2B or 1B)",
+    )
+    dia2_cfg: float = Field(default=2.0, description="Dia2 CFG scale")
+    dia2_temperature: float = Field(default=0.8, description="Dia2 sampling temperature")
+    dia2_topk: int = Field(default=50, description="Dia2 sampling top_k")
+    dia2_prefix_speaker_1: str | None = Field(
+        default=None,
+        description="Path to prefix audio for speaker 1",
+    )
+    dia2_prefix_speaker_2: str | None = Field(
+        default=None,
+        description="Path to prefix audio for speaker 2",
+    )
+    dia2_include_prefix: bool = Field(
+        default=True,
+        description="Include prefix audio in output for continuity",
+    )
 
 
 class DefaultsConfig(BaseModel):

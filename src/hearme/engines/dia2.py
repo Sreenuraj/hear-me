@@ -132,10 +132,18 @@ class Dia2Engine(BaseEngine):
             import warnings
             warnings.filterwarnings("ignore", message=".*unauthenticated requests.*")
             
+            from hearme.config import load_config
+            cfg = load_config()
+            use_prefix = bool(cfg.audio.dia2_prefix_speaker_1 or cfg.audio.dia2_prefix_speaker_2)
+            force_cli = os.environ.get("HEARME_DIA2_USE_CLI") == "1"
+
             try:
                 from dia2 import Dia2, GenerationConfig
                 self._use_cli = False
             except Exception:
+                self._use_cli = True
+
+            if use_prefix or force_cli:
                 self._use_cli = True
                 self._repo_dir = self._resolve_repo_dir()
                 if not self._repo_dir:
@@ -155,7 +163,8 @@ class Dia2Engine(BaseEngine):
             
             logger.info(f"Loading Dia2 model on {device}...")
             # Use official Nari Labs repo
-            self._model = Dia2.from_repo("nari-labs/Dia2-2B", device=device)
+            model_repo = cfg.audio.dia2_model if cfg else "nari-labs/Dia2-2B"
+            self._model = Dia2.from_repo(model_repo, device=device)
             # Default generation + sampling config (tuned for conversational TTS)
             self._gen_config = GenerationConfig()
             self._loaded = True
@@ -289,10 +298,28 @@ class Dia2Engine(BaseEngine):
                     output_path = tmpdir_path / "output.wav"
                     input_path.write_text(script, encoding="utf-8")
 
+                    from hearme.config import load_config
+                    cfg = load_config()
+                    model_repo = cfg.audio.dia2_model
                     cmd = [
                         uv, "run", "-m", "dia2.cli",
-                        "--hf", "nari-labs/Dia2-2B",
+                        "--hf", model_repo,
                         "--input", str(input_path),
+                    ]
+
+                    # Optional continuity prefixes
+                    if cfg.audio.dia2_prefix_speaker_1:
+                        cmd += ["--prefix-speaker-1", str(Path(cfg.audio.dia2_prefix_speaker_1).expanduser())]
+                    if cfg.audio.dia2_prefix_speaker_2:
+                        cmd += ["--prefix-speaker-2", str(Path(cfg.audio.dia2_prefix_speaker_2).expanduser())]
+                    if cfg.audio.dia2_include_prefix:
+                        cmd += ["--include-prefix"]
+
+                    # Sampling parameters
+                    cmd += [
+                        "--cfg", str(cfg.audio.dia2_cfg),
+                        "--temperature", str(cfg.audio.dia2_temperature),
+                        "--topk", str(cfg.audio.dia2_topk),
                         str(output_path),
                     ]
                     env = os.environ.copy()
