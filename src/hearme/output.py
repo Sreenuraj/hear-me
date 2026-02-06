@@ -177,7 +177,7 @@ def persist_outputs(
     return result
 
 
-def get_output_path(root: str = ".", filename: str = "hear-me.audio") -> str:
+def get_output_path(root: str = ".", filename: str = "hear-me") -> str:
     """
     Get the default output path for audio.
     

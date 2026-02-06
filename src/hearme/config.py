@@ -19,7 +19,7 @@ class AudioConfig(BaseModel):
     engine: str = Field(default="kokoro", description="Primary TTS engine")
     fallback_engine: str | None = Field(default="piper", description="Fallback engine")
     voices: str | Literal["auto"] = Field(default="auto", description="Voice selection")
-    format: Literal["mp3", "wav"] = Field(default="mp3", description="Output format")
+    format: Literal["mp3", "wav"] = Field(default="wav", description="Output format")
     max_chars_per_chunk: int = Field(
         default=2000,
         description="Chunk size for long renders (prevents timeouts)",

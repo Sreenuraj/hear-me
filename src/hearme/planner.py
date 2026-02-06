@@ -268,7 +268,8 @@ def propose_audio_plan(
     documents: list[DocumentInfo] | list[DocumentStructure],
     structures: list[DocumentStructure] | None = None,
     mode: AudioMode = "agent-decided",
-    length: str = "balanced"
+    length: str = "balanced",
+    force_single_speaker: bool = False,
 ) -> AudioPlan:
     """
     Propose an audio generation plan.
@@ -294,12 +295,19 @@ def propose_audio_plan(
         mode, mode_reason = suggest_mode(structures)
     else:
         mode_reason = f"Mode '{mode}' was explicitly requested"
+
+    if force_single_speaker:
+        mode = "explainer"
+        mode_reason = "Single-speaker engine detected - forcing explainer mode"
     
     # Order documents
     ordered = order_documents(documents, structures)
     
     # Get speaker configuration
-    speakers = SPEAKER_CONFIGS.get(mode, SPEAKER_CONFIGS["discussion"])
+    if force_single_speaker:
+        speakers = SPEAKER_CONFIGS["explainer"]
+    else:
+        speakers = SPEAKER_CONFIGS.get(mode, SPEAKER_CONFIGS["discussion"])
     
     # Identify ambiguities
     ambiguities = identify_ambiguities(structures)

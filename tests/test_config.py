@@ -29,9 +29,9 @@ class TestDefaultConfig:
         assert config.privacy.allow_network is False
     
     def test_default_format(self):
-        """Default audio format should be mp3."""
+        """Default audio format should be wav."""
         config = HearmeConfig()
-        assert config.audio.format == "mp3"
+        assert config.audio.format == "wav"
     
     def test_default_length(self):
         """Default length should be balanced."""

@@ -90,6 +90,8 @@ async def scan_workspace(path: str = ".") -> dict:
     Args:
         path: Root path to scan (defaults to current directory)
     """
+    if path == ".":
+        path = os.getcwd()
     result = do_scan_workspace(path)
     return result.model_dump()
 
@@ -114,6 +116,8 @@ async def analyze_documents(documents: list[str], root: str = ".") -> dict:
         If you already have explicit document paths, you can call this
         directly and skip scan_workspace.
     """
+    if root == ".":
+        root = os.getcwd()
     result = do_analyze_documents(documents, root)
     return result.model_dump()
 
@@ -159,15 +163,20 @@ async def propose_audio_plan(
     Note:
         If documents are explicitly provided, you can skip scan_workspace.
     """
+    if root == ".":
+        root = os.getcwd()
     # Analyze documents first to get structure
     analysis = do_analyze_documents(documents, root)
     
     # Generate plan
+    config = load_config()
+    single_speaker = config.audio.engine in ("kokoro", "piper")
     plan = do_propose_plan(
         documents=analysis.documents,
         structures=analysis.documents,
         mode=mode,
         length=length,
+        force_single_speaker=single_speaker,
     )
     return plan.model_dump()
 
@@ -198,6 +207,8 @@ async def prepare_audio_context(
     Note:
         If documents are explicitly provided, you can skip scan_workspace.
     """
+    if root == ".":
+        root = os.getcwd()
     # Analyze documents first
     analysis = do_analyze_documents(documents, root)
 
@@ -224,7 +235,7 @@ async def prepare_audio_context(
 @mcp.tool()
 async def render_audio(
     script: list[dict] | None = None,
-    output_path: str = ".hear-me/hear-me.audio.wav",
+    output_path: str = ".hear-me/hear-me.wav",
     voice_map: dict | None = None,
     engine: str | None = None,
     persist: bool = True,

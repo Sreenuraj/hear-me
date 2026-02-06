@@ -176,7 +176,7 @@ def _chunk_segments(
 
 def render_audio(
     script: list[dict],
-    output_path: str = ".hear-me/hear-me.audio.wav",
+    output_path: str = ".hear-me/hear-me.wav",
     voice_map: dict[str, str] | None = None,
     engine_name: str | None = None,
     format: AudioFormat = "wav",

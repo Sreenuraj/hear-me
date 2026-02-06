@@ -2,7 +2,7 @@
 
 **🎧 Experimental: this repo includes [`hear-me.wav`](hear-me.wav) — a little preview while we keep polishing the pipeline.**
 
-> **Replace your README.md with a hear-me.mp3**
+> **Replace your README.md with a hear-me.wav**
 
 hear-me is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) that transforms your project documentation into natural, conversational audio files.
 
@@ -13,12 +13,12 @@ Instead of asking users to *read* your README, let them *listen* to it.
 ## 💡 The Idea
 
 ```
-README.md  →  hear-me MCP  →  hear-me.mp3
+README.md  →  hear-me MCP  →  hear-me.wav
 ```
 
 1. **You** plug hear-me into your AI agent (PostQode, Copilot, Cline, etc.)
 2. **Select** the documents you want to convert (README, architecture docs, guides)
-3. **Generate** a `hear-me.mp3` – a podcast-style audio explanation of your project
+3. **Generate** a `hear-me.wav` – a podcast-style audio explanation of your project
 4. **Ship it** alongside your code, so users can listen instead of read
 
 Think Google NotebookLM's "Audio Overview" – but for any codebase, running locally on your machine.
@@ -29,7 +29,7 @@ Think Google NotebookLM's "Audio Overview" – but for any codebase, running loc
 
 | Traditional | With hear-me |
 |-------------|-------------|
-| `README.md` – walls of text | `hear-me.mp3` – conversational audio |
+| `README.md` – walls of text | `hear-me.wav` – conversational audio |
 | Users skim or skip | Users listen while commuting/coding |
 | Static documentation | Dynamic, engaging explanations |
 | One format fits none | Audio-first understanding |
